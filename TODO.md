@@ -83,8 +83,8 @@ What’s left is mostly **structured output stability**, **consistency**, and **
 
 ### 5) Output behavior consistency
 
-* [ ] Ensure `--quiet` suppresses human output but **never suppresses JSON errors/events**
-* [ ] Decide + enforce one contract for mixed streams:
+* [x] Ensure `--quiet` suppresses human output but **never suppresses JSON errors/events**
+* [x] Decide + enforce one contract for mixed streams:
 
   * human output to stdout and JSON to stderr, or vice versa
   * make it consistent across all modes (stdin-text, rg-json, apply manifest)

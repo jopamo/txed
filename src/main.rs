@@ -213,7 +213,11 @@ fn try_main() -> Result<i32> {
         } else if std::io::stdout().is_terminal() {
             OutputFormat::Diff
         } else {
-            OutputFormat::Json
+            if let InputMode::StdinText = mode {
+                OutputFormat::Diff
+            } else {
+                OutputFormat::Json
+            }
         }
     });
 

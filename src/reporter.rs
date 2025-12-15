@@ -18,6 +18,8 @@ pub struct FileResult {
     pub skipped: Option<String>,
     /// Diff lines (if dry_run or preview).
     pub diff: Option<String>,
+    /// Full generated content (for stdin-text mode).
+    pub generated_content: Option<String>,
 }
 
 /// Overall execution report.
@@ -75,25 +77,51 @@ impl Report {
             eprintln!("Policy Error: {}", msg);
         }
 
-        if self.validate_only {
-            println!("VALIDATION RUN - No files were written.");
-        } else if self.dry_run {
-            println!("DRY RUN - No files were written.");
-        }
-        println!("Processed {} files, modified {}, {} replacements.",
-                 self.total, self.modified, self.replacements);
-        for file in &self.files {
-            if let Some(err) = &file.error {
-                println!("  {}: ERROR - {}", file.path.display(), err);
-            } else if let Some(reason) = &file.skipped {
-                println!("  {}: skipped ({})", file.path.display(), reason);
-            } else if file.modified {
-                println!("  {}: modified ({} replacements)", file.path.display(), file.replacements);
-                if let Some(diff) = &file.diff {
-                    println!("{}", diff);
+        let has_generated_content = self.files.iter().any(|f| f.generated_content.is_some());
+
+        if has_generated_content {
+            // If we have generated content, print it to stdout.
+            // All other metadata goes to stderr.
+            for file in &self.files {
+                if let Some(content) = &file.generated_content {
+                    print!("{}", content);
                 }
-            } else {
-                println!("  {}: no changes", file.path.display());
+                if let Some(err) = &file.error {
+                    eprintln!("ERROR: {}", err);
+                }
+            }
+
+            // Print summary to stderr
+             if self.validate_only {
+                eprintln!("VALIDATION RUN - No files were written.");
+            } else if self.dry_run {
+                eprintln!("DRY RUN - No files were written.");
+            }
+            eprintln!("Processed {} files, modified {}, {} replacements.",
+                 self.total, self.modified, self.replacements);
+
+        } else {
+            // Standard behavior
+            if self.validate_only {
+                println!("VALIDATION RUN - No files were written.");
+            } else if self.dry_run {
+                println!("DRY RUN - No files were written.");
+            }
+            println!("Processed {} files, modified {}, {} replacements.",
+                     self.total, self.modified, self.replacements);
+            for file in &self.files {
+                if let Some(err) = &file.error {
+                    eprintln!("  {}: ERROR - {}", file.path.display(), err);
+                } else if let Some(reason) = &file.skipped {
+                    println!("  {}: skipped ({})", file.path.display(), reason);
+                } else if file.modified {
+                    println!("  {}: modified ({} replacements)", file.path.display(), file.replacements);
+                    if let Some(diff) = &file.diff {
+                        println!("{}", diff);
+                    }
+                } else {
+                    println!("  {}: no changes", file.path.display());
+                }
             }
         }
     }
@@ -104,23 +132,45 @@ impl Report {
             eprintln!("Policy Error: {}", msg);
         }
 
-        if self.validate_only {
-            println!("VALIDATION RUN - No files were written.");
-        } else if self.dry_run {
-            println!("DRY RUN - No files were written.");
-        }
-        println!("Processed {} files, modified {}, {} replacements.",
+        let has_generated_content = self.files.iter().any(|f| f.generated_content.is_some());
+
+        if has_generated_content {
+             // Same as print_human for content
+            for file in &self.files {
+                if let Some(content) = &file.generated_content {
+                    print!("{}", content);
+                }
+                 if let Some(err) = &file.error {
+                    eprintln!("ERROR: {}", err);
+                }
+            }
+             // Summary to stderr
+             if self.validate_only {
+                eprintln!("VALIDATION RUN - No files were written.");
+            } else if self.dry_run {
+                eprintln!("DRY RUN - No files were written.");
+            }
+            eprintln!("Processed {} files, modified {}, {} replacements.",
                  self.total, self.modified, self.replacements);
-        for file in &self.files {
-            if let Some(err) = &file.error {
-                println!("  {}: ERROR - {}", file.path.display(), err);
-            } else if let Some(reason) = &file.skipped {
-                println!("  {}: skipped ({})", file.path.display(), reason);
-            } else if file.modified {
-                println!("  {}: modified ({} replacements)", file.path.display(), file.replacements);
-                // Diff is explicitly omitted in summary format
-            } else {
-                println!("  {}: no changes", file.path.display());
+        } else {
+            if self.validate_only {
+                println!("VALIDATION RUN - No files were written.");
+            } else if self.dry_run {
+                println!("DRY RUN - No files were written.");
+            }
+            println!("Processed {} files, modified {}, {} replacements.",
+                     self.total, self.modified, self.replacements);
+            for file in &self.files {
+                if let Some(err) = &file.error {
+                    eprintln!("  {}: ERROR - {}", file.path.display(), err);
+                } else if let Some(reason) = &file.skipped {
+                    println!("  {}: skipped ({})", file.path.display(), reason);
+                } else if file.modified {
+                    println!("  {}: modified ({} replacements)", file.path.display(), file.replacements);
+                    // Diff is explicitly omitted in summary format
+                } else {
+                    println!("  {}: no changes", file.path.display());
+                }
             }
         }
     }
@@ -130,6 +180,24 @@ impl Report {
         if let Some(msg) = &self.policy_violation {
             eprintln!("Policy Error: {}", msg);
         }
+        
+        // For stdin-text, quiet mode probably still wants the output?
+        // If I say "quiet", usually I want NO output except errors.
+        // But for stdin-text, the output IS the result.
+        // If I do `echo foo | sd2 ... -q`, I probably still want the result?
+        // "Ensure --quiet suppresses human output but never suppresses JSON errors/events"
+        // It doesn't say anything about data output.
+        // But usually -q means "don't print logs".
+        
+        let has_generated_content = self.files.iter().any(|f| f.generated_content.is_some());
+        if has_generated_content {
+             for file in &self.files {
+                if let Some(content) = &file.generated_content {
+                    print!("{}", content);
+                }
+            }
+        }
+
         for file in &self.files {
              if let Some(err) = &file.error {
                 eprintln!("  {}: ERROR - {}", file.path.display(), err);
@@ -151,10 +219,20 @@ impl Report {
 
     /// Print report as JSON events.
     pub fn print_json(&self, pipeline: &Pipeline, tool_version: &str, mode: &str, input_mode: &str) {
+        // If input_mode is stdin-text, we normally printed content. 
+        // But in JSON mode, we probably shouldn't print raw content to stdout mixed with JSON.
+        // The content is inside the JSON event.
+        
+        // However, if we previously printed newline for stdin-text, we might need to check.
+        // The original code:
+        /*
         if input_mode == "stdin-text" {
             // Ensure JSON starts on a new line if content was printed without trailing newline
             println!();
         }
+        */
+        // Now we don't print content in engine, so we don't need this check/newline!
+        
         let start = RunStart {
             schema_version: "1".into(),
             tool_version: tool_version.into(),
@@ -195,6 +273,7 @@ impl Report {
                     modified: file.modified,
                     replacements: file.replacements,
                     diff: file.diff.clone(),
+                    generated_content: file.generated_content.clone(),
                 }
             };
             println!("{}", serde_json::to_string(&Event::File(event)).unwrap());

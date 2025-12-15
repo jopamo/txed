@@ -38,6 +38,8 @@ pub enum FileEvent {
         replacements: usize,
         #[serde(skip_serializing_if = "Option::is_none")]
         diff: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        generated_content: Option<String>,
     },
     Skipped {
         path: PathBuf,

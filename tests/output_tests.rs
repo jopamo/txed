@@ -54,5 +54,26 @@ fn test_quiet_json_prints_json() {
        .arg(file.to_str().unwrap())
        .assert()
        .success()
-       .stdout(predicates::str::contains("\"replacements\":1"));
+       .stdout(predicates::str::contains("\"replacements\":1"))
+       .stderr("");
+}
+
+#[test]
+fn test_quiet_json_captures_errors_in_json_and_silences_stderr() {
+    let dir = tempdir().unwrap();
+    let file = dir.path().join("file.txt");
+    fs::write(&file, "foo").unwrap();
+
+    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    cmd.arg("foo")
+       .arg("bar")
+       .arg("--quiet")
+       .arg("--json")
+       .arg("--require-match")
+       .arg("baz") // Won't match
+       .arg(file.to_str().unwrap())
+       .assert()
+       .failure() // Should fail due to policy
+       .stdout(predicates::str::contains("\"policy_violation\":\"No matches found (--require-match)\""))
+       .stderr(""); // Stderr should be silent
 }

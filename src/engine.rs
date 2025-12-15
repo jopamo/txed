@@ -65,6 +65,7 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
                         error: None,
                         skipped: Some("glob exclude".into()), // "glob exclude" covers "not in include"
                         diff: None,
+                        generated_content: None,
                     }, None);
                 }
              }
@@ -78,6 +79,7 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
                         error: None,
                         skipped: Some("glob exclude".into()),
                         diff: None,
+                        generated_content: None,
                     }, None);
                  }
              }
@@ -117,9 +119,10 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
             }
         }
 
-                if has_error {
-                    break;
-                }    }
+        if has_error {
+            break;
+        }
+    }
 
     // Policy checks
     if pipeline.require_match && report.replacements == 0 {
@@ -189,17 +192,15 @@ fn process_text(
     
     match process_content_inner(original.clone(), operations, pipeline, None) {
         Ok((modified, replacements, diff, new_content)) => {
-            // If not dry run (and not validate only), we print the new content to stdout
-            if !pipeline.dry_run && modified {
-                print!("{}", new_content);
-            }
-            // If unmodified, maybe print original? 
-            // The spec says: "returns counts/diff as stdout content ... output goes to stdout"
-            // If it's a filter, it should output content. 
-            // If no changes, it should output original content.
-            if !pipeline.dry_run && !modified {
-                print!("{}", original);
-            }
+            let generated_content = if !pipeline.dry_run {
+                if modified {
+                    Some(new_content)
+                } else {
+                    Some(original)
+                }
+            } else {
+                None
+            };
 
             FileResult {
                 path: path_buf,
@@ -208,6 +209,7 @@ fn process_text(
                 error: None,
                 skipped: None,
                 diff,
+                generated_content,
             }
         },
         Err(e) => FileResult {
@@ -217,6 +219,7 @@ fn process_text(
             error: Some(e.to_string()),
             skipped: None,
             diff: None,
+            generated_content: None,
         },
     }
 }
@@ -246,6 +249,7 @@ fn process_file(
                         error: None,
                         skipped: Some("symlink".into()),
                         diff: None,
+                        generated_content: None,
                     }, None);
                 }
                 Symlinks::Error => {
@@ -256,6 +260,7 @@ fn process_file(
                         error: Some("Encountered symlink with --symlinks error".into()),
                         skipped: None,
                         diff: None,
+                        generated_content: None,
                     }, None);
                 }
             }
@@ -272,6 +277,7 @@ fn process_file(
             error: Some(e.to_string()),
             skipped: None,
             diff: None,
+            generated_content: None,
         }, None)
     };
 
@@ -286,6 +292,7 @@ fn process_file(
                     error: None,
                     skipped: Some("binary file".into()),
                     diff: None,
+                    generated_content: None,
                 }, None);
             }
             BinaryFileMode::Error => {
@@ -296,6 +303,7 @@ fn process_file(
                     error: Some("Binary file detected".into()),
                     skipped: None,
                     diff: None,
+                    generated_content: None,
                 }, None);
             }
         }
@@ -322,6 +330,7 @@ fn process_file(
                             error: None,
                             skipped: None,
                             diff,
+                            generated_content: None,
                         }, Some(staged)),
                         Err(e) => (FileResult {
                             path: path_buf,
@@ -330,6 +339,7 @@ fn process_file(
                             error: Some(e.to_string()),
                             skipped: None,
                             diff: None,
+                            generated_content: None,
                         }, None),
                     }
                 } else {
@@ -342,6 +352,7 @@ fn process_file(
                             error: Some(e.to_string()),
                             skipped: None,
                             diff: None,
+                            generated_content: None,
                         }, None);
                     }
                     
@@ -352,6 +363,7 @@ fn process_file(
                         error: None,
                         skipped: None,
                         diff,
+                        generated_content: None,
                     }, None)
                 }
             } else {
@@ -362,6 +374,7 @@ fn process_file(
                     error: None,
                     skipped: None,
                     diff,
+                    generated_content: None,
                 }, None)
             }
         },
@@ -372,6 +385,7 @@ fn process_file(
             error: Some(e.to_string()),
             skipped: None,
             diff: None,
+            generated_content: None,
         }, None),
     }
 }
