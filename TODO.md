@@ -91,8 +91,8 @@ What’s left is mostly **structured output stability**, **consistency**, and **
 
 ### 6) Diff correctness and stability
 
-* [ ] Confirm diff formatting is stable and deterministic (path headers, newline handling, no trailing noise)
-* [ ] Add tests for newline edge cases:
+* [x] Confirm diff formatting is stable and deterministic (path headers, newline handling, no trailing noise)
+* [x] Add tests for newline edge cases:
 
   * files without trailing newline
   * CRLF input (if you support it) and how it’s preserved

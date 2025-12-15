@@ -461,6 +461,9 @@ fn generate_diff(old: &str, new: &str) -> Option<String> {
             ChangeTag::Equal => " ",
         };
         output.push_str(&format!("{}{}", sign, change));
+        if change.missing_newline() {
+            output.push_str("\n\\ No newline at end of file\n");
+        }
     }
     Some(output)
 }
