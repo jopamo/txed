@@ -233,7 +233,7 @@ These should be enforced in engine/report as policy checks.
   * suppress human output, still emit JSON errors if `--json`
   * implement as output policy in reporter, not sprinkled `println!`
 
-* [ ] **`--format diff|summary|json`**
+* [x] **`--format diff|summary|json`**
   **Rust notes**
 
   * `enum OutputFormat { Diff, Summary, Json }`

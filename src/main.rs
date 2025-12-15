@@ -193,19 +193,18 @@ fn main() -> Result<()> {
     let format = args.format.unwrap_or_else(|| {
         if args.json {
             OutputFormat::Json
-        } else if args.quiet {
-            // If quiet, don't output diff/summary, but still handle errors
-            OutputFormat::Summary // or a new Silent format
-        } else {
+        } else if std::io::stdout().is_terminal() {
             OutputFormat::Diff
+        } else {
+            OutputFormat::Json
         }
     });
     
     match format {
         OutputFormat::Json => report.print_json(),
-        OutputFormat::Agent => report.print_agent(), // Assuming print_agent handles quiet
+        OutputFormat::Agent => report.print_agent(),
         OutputFormat::Diff => if args.quiet { report.print_errors_only() } else { report.print_human() },
-        OutputFormat::Summary => if args.quiet { report.print_errors_only() } else { report.print_human() },
+        OutputFormat::Summary => if args.quiet { report.print_errors_only() } else { report.print_summary() },
     }
 
     std::process::exit(report.exit_code());

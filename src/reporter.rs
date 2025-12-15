@@ -96,6 +96,33 @@ impl Report {
         }
     }
 
+    /// Print report in summary format (human-readable, but no diffs).
+    pub fn print_summary(&self) {
+        if let Some(msg) = &self.policy_violation {
+            eprintln!("Policy Error: {}", msg);
+        }
+
+        if self.validate_only {
+            println!("VALIDATION RUN - No files were written.");
+        } else if self.dry_run {
+            println!("DRY RUN - No files were written.");
+        }
+        println!("Processed {} files, modified {}, {} replacements.",
+                 self.total, self.modified, self.replacements);
+        for file in &self.files {
+            if let Some(err) = &file.error {
+                println!("  {}: ERROR - {}", file.path.display(), err);
+            } else if let Some(reason) = &file.skipped {
+                println!("  {}: skipped ({})", file.path.display(), reason);
+            } else if file.modified {
+                println!("  {}: modified ({} replacements)", file.path.display(), file.replacements);
+                // Diff is explicitly omitted in summary format
+            } else {
+                println!("  {}: no changes", file.path.display());
+            }
+        }
+    }
+
     /// Print only errors (for --quiet).
     pub fn print_errors_only(&self) {
         if let Some(msg) = &self.policy_violation {

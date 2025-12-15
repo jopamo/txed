@@ -26,6 +26,7 @@ fn test_validate_only_with_file_dry_run() {
     cmd
 
         .arg("--validate-only")
+        .arg("--format=diff")
         .arg("foo")
         .arg("bar")
         .arg(file_path.to_str().unwrap())
@@ -51,6 +52,7 @@ fn test_stdin_paths() {
         .arg("foo")
         .arg("bar")
         .arg("--stdin-paths")
+        .arg("--format=diff")
         .write_stdin(format!("{}\n", file_path.to_str().unwrap()))
         .assert()
         .success()
@@ -87,6 +89,7 @@ fn test_files0() {
     cmd.arg("foo")
         .arg("bar")
         .arg("--files0")
+        .arg("--format=diff")
         .write_stdin(input)
         .assert()
         .success()
@@ -118,6 +121,7 @@ fn test_rg_json() {
         .arg("foo")
         .arg("bar")
         .arg("--rg-json")
+        .arg("--format=diff")
         .write_stdin(json_input)
         .assert()
         .success()

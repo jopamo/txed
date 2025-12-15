@@ -13,6 +13,7 @@ fn test_quiet_suppresses_success() {
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")
+       .arg("--format=summary")
        .arg(file.to_str().unwrap())
        .assert()
        .success()
@@ -29,6 +30,7 @@ fn test_quiet_prints_errors() {
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")
+       .arg("--format=summary")
        .arg("--require-match")
        .arg("baz") // This won't match, triggering policy error
        .arg(file.to_str().unwrap())
