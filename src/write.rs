@@ -1,4 +1,5 @@
 use crate::error::{Error, Result};
+use crate::model::PermissionsMode;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -9,12 +10,15 @@ use tempfile::NamedTempFile;
 pub struct WriteOptions {
     /// If true, do not follow symbolic links (operate on symlink itself).
     pub no_follow_symlinks: bool,
+    /// Permissions handling mode.
+    pub permissions: PermissionsMode,
 }
 
 impl Default for WriteOptions {
     fn default() -> Self {
         Self {
             no_follow_symlinks: false,
+            permissions: PermissionsMode::default(),
         }
     }
 }
@@ -43,9 +47,21 @@ pub fn stage_file(path: &Path, data: &[u8], options: &WriteOptions) -> Result<St
 
     let mut temp = NamedTempFile::new_in(parent)?;
 
-    // Preserve permissions if the target file exists
-    if let Ok(metadata) = fs::metadata(&target_path) {
-        temp.as_file().set_permissions(metadata.permissions()).ok();
+    // Set permissions
+    match options.permissions {
+        PermissionsMode::Preserve => {
+            if let Ok(metadata) = fs::metadata(&target_path) {
+                temp.as_file().set_permissions(metadata.permissions()).ok();
+            }
+        }
+        PermissionsMode::Fixed(mode) => {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let p = fs::Permissions::from_mode(mode);
+                temp.as_file().set_permissions(p)?;
+            }
+        }
     }
 
     // Write data

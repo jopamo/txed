@@ -96,6 +96,18 @@ impl Report {
         }
     }
 
+    /// Print only errors (for --quiet).
+    pub fn print_errors_only(&self) {
+        if let Some(msg) = &self.policy_violation {
+            eprintln!("Policy Error: {}", msg);
+        }
+        for file in &self.files {
+             if let Some(err) = &file.error {
+                eprintln!("  {}: ERROR - {}", file.path.display(), err);
+            }
+        }
+    }
+
     /// Determine the appropriate exit code for this report.
     pub fn exit_code(&self) -> i32 {
         if self.policy_violation.is_some() {

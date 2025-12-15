@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use crate::model::{Pipeline, Operation, Transaction, Symlinks};
+use crate::model::{Pipeline, Operation, Transaction, Symlinks, BinaryFileMode};
 use crate::replacer::Replacer;
 use crate::write::{write_file, stage_file, WriteOptions};
 use crate::reporter::{Report, FileResult};
@@ -255,6 +255,39 @@ fn process_file(
             diff: None,
         }
     };
+
+    // Check for binary content (simple heuristic: look for null byte)
+    // We only check the first 8KB to avoid scanning massive files entirely if unnecessary, 
+    // although for correctness on the whole file we should scan all. 
+    // `grep` usually checks the first few KB.
+    // However, if we are about to load it all into a String, we might as well check it all 
+    // or rely on `String::from_utf8` failing.
+    // But `from_utf8` fails on invalid UTF-8, not necessarily just "binary" (though binary often has invalid utf8).
+    // The requirement is specific about 0x00.
+    if content_bytes.contains(&0) {
+        match pipeline.binary {
+            BinaryFileMode::Skip => {
+                 return FileResult {
+                    path: path_buf,
+                    modified: false,
+                    replacements: 0,
+                    error: None,
+                    skipped: Some("binary file".into()),
+                    diff: None,
+                };
+            }
+            BinaryFileMode::Error => {
+                return FileResult {
+                    path: path_buf,
+                    modified: false,
+                    replacements: 0,
+                    error: Some("Binary file detected".into()),
+                    skipped: None,
+                    diff: None,
+                };
+            }
+        }
+    }
     
     let original = String::from_utf8_lossy(&content_bytes).to_string();
 
@@ -263,10 +296,8 @@ fn process_file(
             // Write changes if modified and not dry_run and not no_write
             if modified && !pipeline.dry_run && !pipeline.no_write {
                 let options = WriteOptions {
-                    // This will be replaced by new symlink/binary/permissions logic
-                    // Currently no_follow_symlinks is the only field.
-                    // This is temporary until write::write_file is updated.
                     no_follow_symlinks: pipeline.symlinks != crate::model::Symlinks::Follow,
+                    permissions: pipeline.permissions.clone(),
                 };
                 
                 if let Some(manager) = tm {

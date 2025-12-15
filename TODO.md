@@ -205,7 +205,7 @@ These should be enforced in engine/report as policy checks.
   * if `error`, abort with an error event
   * represent as `enum SymlinkMode`
 
-* [ ] **`--binary skip|error`**
+* [x] **`--binary skip|error`**
   **Rust notes**
 
   * early detection before parsing as UTF-8
@@ -213,7 +213,7 @@ These should be enforced in engine/report as policy checks.
   * better: use `content_inspector` for a more nuanced guess
   * represent as `enum BinaryMode`
 
-* [ ] **`--permissions preserve|fixed`**
+* [x] **`--permissions preserve|fixed`**
   **Rust notes**
 
   * preserve: capture `std::fs::metadata().permissions()` and re-apply after write if needed
@@ -227,7 +227,7 @@ These should be enforced in engine/report as policy checks.
 
 ### Output Control
 
-* [ ] **`--quiet`**
+* [x] **`--quiet`**
   **Rust notes**
 
   * suppress human output, still emit JSON errors if `--json`

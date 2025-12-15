@@ -210,6 +210,10 @@ pub struct DefaultArgs {
     #[arg(long = "permissions", value_enum, default_value_t = PermissionsMode::Preserve)]
     pub permissions: PermissionsMode,
 
+    /// Fixed permissions mode (e.g. 755), used if --permissions=fixed.
+    #[arg(long = "mode", value_name = "MODE")]
+    pub mode: Option<String>,
+
     // ========================================================================
     // Output control
     // ========================================================================

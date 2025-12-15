@@ -1,11 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Parser;
 use std::fs;
 use std::io::IsTerminal;
 
-use crate::cli::{Cli, Commands, OutputFormat, Transaction as CliTransaction, Symlinks as CliSymlinks, BinaryFileMode as CliBinaryFileMode, PermissionsMode as CliPermissionsMode};
+use crate::cli::{Cli, Commands, OutputFormat, Transaction as CliTransaction, Symlinks as CliSymlinks, BinaryFileMode as CliBinaryFileMode, PermissionsMode as CliPermissionsMode, DefaultArgs};
 use crate::input::{InputItem, InputMode};
-use crate::model::{Operation, Pipeline, LineRange};
+use crate::model::{Operation, Pipeline, LineRange, PermissionsMode};
 
 mod cli;
 mod engine;
@@ -35,6 +35,18 @@ fn parse_range(s: &str) -> Option<LineRange> {
     };
     
     Some(LineRange { start, end })
+}
+
+fn resolve_permissions(args: &DefaultArgs) -> Result<Option<PermissionsMode>> {
+    if let Some(ref m_str) = args.mode {
+        let m = u32::from_str_radix(m_str, 8).context("Invalid octal mode")?;
+        Ok(Some(PermissionsMode::Fixed(m)))
+    } else {
+        match args.permissions {
+            CliPermissionsMode::Fixed => bail!("--mode <OCTAL> is required when --permissions fixed is used"),
+            CliPermissionsMode::Preserve => Ok(None), // No override / default
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -115,10 +127,15 @@ fn main() -> Result<()> {
         if args.require_match { p.require_match = true; }
         if args.expect.is_some() { p.expect = args.expect; }
         if args.fail_on_change { p.fail_on_change = true; }
-        if args.transaction != CliTransaction::All { p.transaction = args.transaction.into(); } // Convert cli enum to model enum
-        if args.symlinks != CliSymlinks::Follow { p.symlinks = args.symlinks.into(); } // Convert cli enum to model enum
-        if args.binary != CliBinaryFileMode::Skip { p.binary = args.binary.into(); } // Convert cli enum to model enum
-        if args.permissions != CliPermissionsMode::Preserve { p.permissions = args.permissions.into(); } // Convert cli enum to model enum
+        if args.transaction != CliTransaction::All { p.transaction = args.transaction.clone().into(); } // Convert cli enum to model enum
+        if args.symlinks != CliSymlinks::Follow { p.symlinks = args.symlinks.clone().into(); } // Convert cli enum to model enum
+        if args.binary != CliBinaryFileMode::Skip { p.binary = args.binary.clone().into(); } // Convert cli enum to model enum
+        
+        // Resolve permissions override
+        if let Some(perms) = resolve_permissions(&args)? {
+            p.permissions = perms;
+        }
+
         if !args.glob_include.is_empty() { p.glob_include = Some(args.glob_include); }
         if !args.glob_exclude.is_empty() { p.glob_exclude = Some(args.glob_exclude); }
         
@@ -148,6 +165,9 @@ fn main() -> Result<()> {
             range,
         };
 
+        // Resolve permissions
+        let permissions = resolve_permissions(&args)?.unwrap_or(PermissionsMode::Preserve);
+
         Pipeline {
             files: vec![], // Populated by inputs
             operations: vec![op],
@@ -159,7 +179,7 @@ fn main() -> Result<()> {
             transaction: args.transaction.into(), // Convert cli enum to model enum
             symlinks: args.symlinks.into(), // Convert cli enum to model enum
             binary: args.binary.into(), // Convert cli enum to model enum
-            permissions: args.permissions.into(), // Convert cli enum to model enum
+            permissions, 
             validate_only: args.validate_only,
             glob_include: if args.glob_include.is_empty() { None } else { Some(args.glob_include) },
             glob_exclude: if args.glob_exclude.is_empty() { None } else { Some(args.glob_exclude) },
@@ -184,8 +204,8 @@ fn main() -> Result<()> {
     match format {
         OutputFormat::Json => report.print_json(),
         OutputFormat::Agent => report.print_agent(), // Assuming print_agent handles quiet
-        OutputFormat::Diff => if !args.quiet { report.print_human() },
-        OutputFormat::Summary => if !args.quiet { report.print_human() },
+        OutputFormat::Diff => if args.quiet { report.print_errors_only() } else { report.print_human() },
+        OutputFormat::Summary => if args.quiet { report.print_errors_only() } else { report.print_human() },
     }
 
     std::process::exit(report.exit_code());

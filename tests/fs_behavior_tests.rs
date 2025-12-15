@@ -1,6 +1,7 @@
 use assert_cmd::Command;
 use std::fs;
 use tempfile::tempdir;
+use predicates::prelude::*;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 
@@ -105,4 +106,69 @@ fn test_symlinks_error() {
        .arg(link.to_str().unwrap())
        .assert()
        .failure(); 
+}
+
+#[test]
+fn test_binary_skip_default() {
+    let dir = tempdir().unwrap();
+    let bin_file = dir.path().join("bin.dat");
+    
+    // Create a file with a null byte
+    fs::write(&bin_file, b"foo\0bar").unwrap();
+
+    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    cmd.arg("foo")
+       .arg("bar")
+       .arg(bin_file.to_str().unwrap())
+       .assert()
+       // Should default to skip, so no error (unless all skipped is an error, which we decided is exit code 1 if total > 0 modified == 0)
+       // Wait, if I supply one file and it is skipped, exit code is 1 because "no changes".
+       // But it shouldn't be a *runtime error* (stderr output about parsing), just a "nothing done".
+       .failure(); 
+
+    // Content should remain unchanged
+    let content = fs::read(&bin_file).unwrap();
+    assert_eq!(content, b"foo\0bar");
+}
+
+#[test]
+fn test_binary_error() {
+    let dir = tempdir().unwrap();
+    let bin_file = dir.path().join("bin.dat");
+    
+    fs::write(&bin_file, b"foo\0bar").unwrap();
+
+    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    cmd.arg("foo")
+       .arg("bar")
+       .arg("--binary")
+       .arg("error")
+       .arg(bin_file.to_str().unwrap())
+       .assert()
+       .failure()
+       // The reporter prints errors to stdout in human format
+       .stdout(predicates::str::contains("Binary file detected").or(predicates::str::contains("ERROR")));
+}
+
+#[test]
+fn test_binary_skip_with_other_files() {
+    let dir = tempdir().unwrap();
+    let bin_file = dir.path().join("bin.dat");
+    let txt_file = dir.path().join("text.txt");
+    
+    fs::write(&bin_file, b"foo\0bar").unwrap();
+    fs::write(&txt_file, "foo").unwrap();
+
+    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    cmd.arg("foo")
+       .arg("bar")
+       .arg(bin_file.to_str().unwrap())
+       .arg(txt_file.to_str().unwrap())
+       .assert()
+       .success();
+
+    // Binary unchanged
+    assert_eq!(fs::read(&bin_file).unwrap(), b"foo\0bar");
+    // Text changed
+    assert_eq!(fs::read_to_string(&txt_file).unwrap(), "bar");
 }

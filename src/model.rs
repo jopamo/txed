@@ -57,7 +57,7 @@ impl Default for BinaryFileMode {
 #[serde(rename_all = "snake_case")]
 pub enum PermissionsMode {
     Preserve,
-    Fixed,
+    Fixed(u32),
 }
 
 impl Default for PermissionsMode {
@@ -158,6 +158,7 @@ pub struct Pipeline {
 
 impl Pipeline {
     /// Create a simple replace pipeline.
+    #[allow(dead_code)]
     pub fn replace(files: Vec<String>, find: String, with_: String) -> Self {
         Self {
             files,
@@ -235,15 +236,6 @@ impl From<crate::cli::BinaryFileMode> for BinaryFileMode {
         match item {
             crate::cli::BinaryFileMode::Skip => BinaryFileMode::Skip,
             crate::cli::BinaryFileMode::Error => BinaryFileMode::Error,
-        }
-    }
-}
-
-impl From<crate::cli::PermissionsMode> for PermissionsMode {
-    fn from(item: crate::cli::PermissionsMode) -> Self {
-        match item {
-            crate::cli::PermissionsMode::Preserve => PermissionsMode::Preserve,
-            crate::cli::PermissionsMode::Fixed => PermissionsMode::Fixed,
         }
     }
 }
