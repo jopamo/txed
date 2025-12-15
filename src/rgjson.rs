@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::ffi::OsString;
-use std::io::{self, BufRead, Write};
+use std::io::BufRead;
 
 // LINUX/UNIX SPECIFIC: Fast path for arbitrary bytes in paths
 #[cfg(unix)]

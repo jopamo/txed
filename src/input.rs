@@ -1,8 +1,8 @@
 use crate::error::{Error, Result};
 use std::io::{self, BufRead, Read, BufReader};
 use std::path::PathBuf;
-use crate::rgjson::{self, RgMessage, RgKind, stream_rg_json_ndjson, RgSink, DeinterleavingSink, RgData};
-use crate::model::{LineRange, ReplacementRange};
+use crate::rgjson::{stream_rg_json_ndjson, DeinterleavingSink};
+use crate::model::ReplacementRange;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum InputMode {
