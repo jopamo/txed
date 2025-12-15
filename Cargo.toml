@@ -1,0 +1,48 @@
+[package]
+name = "sd2"
+version = "0.1.0"
+edition = "2024"
+authors = ["Your Name <you@example.com>"]
+description = "A safe, fast, deterministic replace engine"
+license = "MIT"
+homepage = "https://github.com/example/sd2"
+repository = "https://github.com/example/sd2.git"
+keywords = ["replace", "regex", "cli", "text-processing"]
+categories = ["command-line-utilities", "text-processing"]
+rust-version = "1.86.0"
+
+[dependencies]
+regex = { version = "1.12.2", default-features = true, features = ["std", "unicode-case", "unicode-perl"] }
+clap = { version = "4.5.53", features = ["derive", "wrap_help"] }
+thiserror = "2.0.17"
+tempfile = "3.23.0"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.128"
+schemars = "1.1.0"
+similar = "2.5.0"
+atty = "0.2.14"
+ignore = { version = "0.4.22", optional = true }
+memmap2 = { version = "0.9.4", optional = true }
+rayon = { version = "1.11.0", optional = true }
+
+[dev-dependencies]
+assert_cmd = "2.1.1"
+anyhow = "1.0.100"
+tempfile = "3.23.0"
+insta = "1.44.3"
+proptest = "1.9.0"
+
+[features]
+default = []
+walk = ["dep:ignore"]
+parallel = ["dep:rayon"]
+mapped = ["dep:memmap2"]
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true

@@ -1,0 +1,193 @@
+sd2 0.1.0
+<Your Name or Org Here>
+
+sd2 is a safe, fast replacement tool designed to complement ripgrep (rg).
+Use rg to select files and sd2 to apply deterministic replacements.
+
+USAGE:
+    sd2 [OPTIONS] FIND REPLACE [PATH ...]
+    sd2 [OPTIONS] -e FIND ... REPLACE [PATH ...]
+    sd2 [OPTIONS] -f FINDFILE REPLACE [PATH ...]
+    command | sd2 [OPTIONS] FIND REPLACE
+    rg [RG_OPTIONS] -l -0 FIND [PATH ...] | sd2 [OPTIONS] --files0 FIND REPLACE
+    sd2 [OPTIONS] --help
+    sd2 [OPTIONS] --version
+
+POSITIONAL ARGUMENTS:
+    <FIND>
+        A pattern used for finding matches. By default, this is a regular
+        expression. To treat patterns as literals, use -F/--fixed-strings.
+
+        To specify a pattern beginning with a dash, use -e/--regexp or the
+        special '--' delimiter.
+
+    <REPLACE>
+        The replacement text.
+
+        Capture groups may be referenced with $0, $1, $2, ... and ${1} for
+        disambiguation. Named groups may be referenced with $name and ${name}.
+        To write a literal $, use $$.
+
+    <PATH>...
+        File paths to modify. Directories are not traversed unless --walk is
+        enabled. If no PATH is given, sd2 reads stdin text when --stdin-text
+        is enabled, otherwise it reads no input and exits with an error.
+
+INPUT OPTIONS:
+    --stdin-text
+        Read input text from stdin and write the replaced text to stdout.
+        This mode does not modify files and ignores file list options.
+
+    --files=PATH
+        Read a list of file paths from PATH (newline-delimited). Use '-' to
+        read the list from stdin.
+
+    --files0
+        Read a NUL-delimited list of file paths from stdin. This is intended
+        for interoperability with tools like rg --files -0 or rg -l -0.
+
+    --rg-json
+        Read ripgrep JSON Lines input from stdin and restrict replacements to
+        files observed in rg's JSON stream.
+
+        Note: In v0.1, sd2 uses rg JSON to collect file paths and does not
+        apply replacements at exact match offsets.
+
+MATCH OPTIONS:
+    -e PATTERN, --regexp=PATTERN
+        Add a find pattern. This option may be provided multiple times.
+        A file is processed if it matches at least one provided pattern.
+
+        When -e/--regexp or -f/--file is used, the positional <FIND> argument
+        is not accepted.
+
+    -f FINDFILE, --file=FINDFILE
+        Read find patterns from FINDFILE, one pattern per line. Empty lines
+        match everything. FINDFILE may be '-' to read patterns from stdin.
+
+    -F, --fixed-strings
+        Treat all find patterns as literals instead of regular expressions.
+
+    -s, --case-sensitive
+        Execute matching case sensitively. This is the default.
+
+    -i, --ignore-case
+        Execute matching case insensitively.
+
+    -S, --smart-case
+        Execute matching case insensitively if the pattern is all lowercase.
+        Otherwise, match case sensitively.
+
+    --no-unicode
+        Disable Unicode mode in the regex engine. This may improve performance
+        for ASCII-centric patterns.
+
+    --crlf
+        Treat CRLF (\r\n) as a line terminator (where applicable).
+
+REPLACE OPTIONS:
+    --strict-replace
+        Treat ambiguous or invalid capture references in <REPLACE> as an error.
+
+    --warn-replace
+        Emit warnings for ambiguous or invalid capture references in <REPLACE>.
+
+        (Default behavior is best-effort replacement with clear errors only for
+        known ambiguous forms like $1bad that require ${1}bad.)
+
+SCOPE OPTIONS:
+    --walk
+        If any PATH arguments are directories, traverse them recursively.
+        This mode is intended for convenience, but for best performance and
+        fidelity, prefer using rg to generate the file set and pass it to sd2.
+
+    -g GLOB, --glob=GLOB
+        Include or exclude paths matched by GLOB. Precede with ! to exclude.
+        When --walk is not enabled, globs apply only to paths discovered while
+        walking directories, not to explicit file arguments.
+
+    -., --hidden
+        When walking directories, include hidden files and directories.
+
+    -L, --follow
+        When walking directories, follow symbolic links.
+
+    -d NUM, --max-depth=NUM
+        Limit directory traversal depth when --walk is enabled.
+
+    --max-filesize=NUM+SUFFIX?
+        Skip files larger than the given size when --walk is enabled.
+
+    --no-ignore
+        When walking directories, do not respect ignore files.
+
+WRITE MODES:
+    --in-place
+        Modify files in place using an atomic write strategy. This is the
+        default when PATH arguments or file list options are used.
+
+    --stdout
+        Never modify files. Write replaced content to stdout.
+
+    --preview
+        Like --stdout, but also print a per-file summary to stderr.
+
+    --dry-run
+        Alias for --preview.
+
+WRITE OPTIONS:
+    --backup[=EXT]
+        Create a backup file before replacing. If EXT is omitted, ".bak" is
+        used. Backups are created next to the original file.
+
+    --no-backup
+        Disable backups.
+
+    --follow-symlinks
+        When a PATH is a symlink, operate on the target.
+
+    --no-follow-symlinks
+        When a PATH is a symlink, operate on the symlink itself where possible.
+
+    --fail-fast
+        Stop after the first error.
+
+    --continue-on-error
+        Continue processing other files after an error and report all failures.
+        (Default.)
+
+OUTPUT OPTIONS:
+    --color=WHEN
+        Control when to use colors. Values: never, auto, always, ansi.
+
+    --json
+        Emit change summaries as JSON Lines on stdout (one record per file).
+
+    -0, --null
+        When printing file paths (e.g., in summaries), terminate them with NUL.
+
+    -q, --quiet
+        Suppress normal output. Errors are still printed.
+
+    --summary
+        Print an aggregate summary to stderr at the end (files changed, matches,
+        replacements, failures).
+
+LOGGING OPTIONS:
+    --debug
+        Show debug messages.
+
+    --trace
+        Show trace messages.
+
+OTHER BEHAVIORS:
+    --help
+        Show this help output.
+
+    -V, --version
+        Show version information.
+
+EXIT STATUS:
+    0  Success (and at least one file was changed, or stdin processed)
+    1  No matches / no changes (when operating on files or stdin)
+    2  Error (invalid arguments, IO errors, parse errors, write failures)
