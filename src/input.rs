@@ -91,13 +91,13 @@ pub fn read_paths_from_stdin_zero() -> Result<Vec<PathBuf>> {
 
 /// Read all text from stdin.
 pub fn read_stdin_text() -> Result<String> {
-    let mut buffer = String::new();
+    let mut buffer = Vec::new();
     // Check if stdin is tty? No, if mode is StdinText we assume they want to read from it.
     // But if it is a TTY we might hang.
     // However, logic usually checks atty before calling this if in Auto mode.
     // In StdinText mode, we force read.
-    io::stdin().read_to_string(&mut buffer).map_err(Error::Io)?;
-    Ok(buffer)
+    io::stdin().read_to_end(&mut buffer).map_err(Error::Io)?;
+    Ok(String::from_utf8_lossy(&buffer).into_owned())
 }
 
 /// Read ripgrep JSON output and extract paths and matches.
