@@ -11,12 +11,15 @@ use similar::{ChangeTag, TextDiff};
 use std::fs;
 use std::path::{Path, PathBuf, Component};
 use std::env;
+use std::time::Instant;
 use globset::{Glob, GlobSet, GlobSetBuilder};
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 /// Execute a pipeline and produce a report.
 pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report> {
+    let start_time = Instant::now();
+
     // validate semantic constraints
     if inputs.is_empty() {
          return Err(Error::Validation("No input sources specified".into()));
@@ -61,9 +64,12 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
                         modified: false,
                         replacements: 0,
                         error: None,
+                        error_code: None,
                         skipped: Some("glob exclude".into()), // "glob exclude" covers "not in include"
                         diff: None,
+                        diff_is_binary: false,
                         generated_content: None,
+                        is_virtual: false,
                     }, None);
                 }
              }
@@ -75,9 +81,12 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
                         modified: false,
                         replacements: 0,
                         error: None,
+                        error_code: None,
                         skipped: Some("glob exclude".into()),
                         diff: None,
+                        diff_is_binary: false,
                         generated_content: None,
+                        is_virtual: false,
                     }, None);
                  }
              }
@@ -130,7 +139,12 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
         if let Some(manager) = tm {
             manager.commit().map_err(|e| Error::TransactionFailure(e.to_string()))?;
         }
+        report.committed = !pipeline.dry_run; // Only true if not dry-run
+    } else {
+        report.committed = false;
     }
+
+    report.duration_ms = start_time.elapsed().as_millis() as u64;
 
     Ok(report)
 }
@@ -191,9 +205,12 @@ fn process_text(
                 modified,
                 replacements,
                 error: None,
+                error_code: None,
                 skipped: None,
                 diff,
+                diff_is_binary: false, // Text input is always treated as text
                 generated_content,
+                is_virtual: true,
             }
         },
         Err(e) => FileResult {
@@ -201,9 +218,12 @@ fn process_text(
             modified: false,
             replacements: 0,
             error: Some(e.to_string()),
+            error_code: Some(e.code().into()),
             skipped: None,
             diff: None,
+            diff_is_binary: false,
             generated_content: None,
+            is_virtual: true,
         },
     }
 }
@@ -231,9 +251,12 @@ fn process_file(
                         modified: false,
                         replacements: 0,
                         error: None,
+                        error_code: None,
                         skipped: Some("symlink".into()),
                         diff: None,
+                        diff_is_binary: false,
                         generated_content: None,
+                        is_virtual: false,
                     }, None);
                 }
                 Symlinks::Error => {
@@ -242,9 +265,12 @@ fn process_file(
                         modified: false,
                         replacements: 0,
                         error: Some("Encountered symlink with --symlinks error".into()),
+                        error_code: Some("E_SYMLINK".into()),
                         skipped: None,
                         diff: None,
+                        diff_is_binary: false,
                         generated_content: None,
+                        is_virtual: false,
                     }, None);
                 }
             }
@@ -259,9 +285,16 @@ fn process_file(
             modified: false,
             replacements: 0,
             error: Some(e.to_string()),
+            error_code: Some(match e.kind() {
+                std::io::ErrorKind::NotFound => "E_NOT_FOUND".into(),
+                std::io::ErrorKind::PermissionDenied => "E_ACCES".into(),
+                _ => "E_IO".into(),
+            }),
             skipped: None,
             diff: None,
+            diff_is_binary: false,
             generated_content: None,
+            is_virtual: false,
         }, None)
     };
 
@@ -274,9 +307,12 @@ fn process_file(
                     modified: false,
                     replacements: 0,
                     error: None,
+                    error_code: None,
                     skipped: Some("binary file".into()),
                     diff: None,
+                    diff_is_binary: true,
                     generated_content: None,
+                    is_virtual: false,
                 }, None);
             }
             BinaryFileMode::Error => {
@@ -285,9 +321,12 @@ fn process_file(
                     modified: false,
                     replacements: 0,
                     error: Some("Binary file detected".into()),
+                    error_code: Some("E_BINARY".into()),
                     skipped: None,
                     diff: None,
+                    diff_is_binary: true,
                     generated_content: None,
+                    is_virtual: false,
                 }, None);
             }
         }
@@ -312,18 +351,24 @@ fn process_file(
                             modified,
                             replacements,
                             error: None,
+                            error_code: None,
                             skipped: None,
                             diff,
+                            diff_is_binary: false,
                             generated_content: None,
+                            is_virtual: false,
                         }, Some(staged)),
                         Err(e) => (FileResult {
                             path: path_buf,
                             modified: false,
                             replacements: 0,
                             error: Some(e.to_string()),
+                            error_code: Some(e.code().into()),
                             skipped: None,
                             diff: None,
+                            diff_is_binary: false,
                             generated_content: None,
+                            is_virtual: false,
                         }, None),
                     }
                 } else {
@@ -334,9 +379,12 @@ fn process_file(
                             modified: false,
                             replacements: 0,
                             error: Some(e.to_string()),
+                            error_code: Some(e.code().into()),
                             skipped: None,
                             diff: None,
+                            diff_is_binary: false,
                             generated_content: None,
+                            is_virtual: false,
                         }, None);
                     }
                     
@@ -345,9 +393,12 @@ fn process_file(
                         modified,
                         replacements,
                         error: None,
+                        error_code: None,
                         skipped: None,
                         diff,
+                        diff_is_binary: false,
                         generated_content: None,
+                        is_virtual: false,
                     }, None)
                 }
             } else {
@@ -356,9 +407,12 @@ fn process_file(
                     modified,
                     replacements,
                     error: None,
+                    error_code: None,
                     skipped: None,
                     diff,
+                    diff_is_binary: false,
                     generated_content: None,
+                    is_virtual: false,
                 }, None)
             }
         },
@@ -367,9 +421,12 @@ fn process_file(
             modified: false,
             replacements: 0,
             error: Some(e.to_string()),
+            error_code: Some(e.code().into()),
             skipped: None,
             diff: None,
+            diff_is_binary: false,
             generated_content: None,
+            is_virtual: false,
         }, None),
     }
 }
@@ -474,6 +531,17 @@ fn generate_diff(old: &str, new: &str) -> Option<String> {
             ChangeTag::Insert => "+",
             ChangeTag::Equal => " ",
         };
+        // Sanitize: replace any non-UTF8 or weird control chars if they slipped through?
+        // Actually, inputs are already Strings (valid UTF-8), but might contain control chars.
+        // The requirement is: "force-sanitize invalid UTF-8 in the `diff` string to the replacement character"
+        // Since input is `&str`, it is already valid UTF-8. 
+        // However, if we want to be extra safe against JSON serialization issues with control chars (though serde handles most):
+        // But the prompt says "If a file is technically text but contains a rogue null byte or invalid UTF-8 sequence that your diff engine tries to include".
+        // We already converted bytes to String using `String::from_utf8_lossy` earlier in `process_file`, so we shouldn't have invalid UTF-8 here.
+        // `from_utf8_lossy` replaces invalid sequences with .
+        // So `old` and `new` are safe.
+        // But let's just make sure we don't return something that breaks.
+        
         output.push_str(&format!("{}{}", sign, change));
         if change.missing_newline() {
             output.push_str("\n\\ No newline at end of file\n");

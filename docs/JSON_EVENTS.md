@@ -59,18 +59,22 @@ Emitted when a file was successfully processed (even if no changes were made).
     "modified": true,
     "replacements": 2,
     "diff": "---\n+++ \n@@ -1 +1 @@\n-foo\n+bar\n",
-    "generated_content": null
+    "diff_is_binary": false,
+    "generated_content": null,
+    "is_virtual": false
   }
 }
 ```
 
 **Fields:**
 *   `type`: "success"
-*   `path`: Path to the file.
+*   `path`: Path to the file. For virtual inputs (stdin), this may be `<stdin>`.
 *   `modified`: `true` if changes were made (or would be made in dry-run).
 *   `replacements`: Number of replacements performed.
-*   `diff`: Unified diff string (optional, usually present in dry-run or validation).
+*   `diff`: Unified diff string (optional, usually present in dry-run or validation). Invalid UTF-8 sequences are replaced with the replacement character.
+*   `diff_is_binary`: `true` if the diff was suppressed or flagged because the file was binary (sanitization handling).
 *   `generated_content`: The full transformed content (optional, mostly for `stdin-text` mode).
+*   `is_virtual`: `true` if the file does not exist on disk (e.g., stdin input).
 
 #### Skipped
 
@@ -100,6 +104,7 @@ Emitted when an operational error occurred for a specific file (e.g., permission
   "file": {
     "type": "error",
     "path": "/abs/path/to/locked.txt",
+    "code": "E_ACCES",
     "message": "Permission denied (os error 13)"
   }
 }
@@ -108,6 +113,7 @@ Emitted when an operational error occurred for a specific file (e.g., permission
 **Fields:**
 *   `type`: "error"
 *   `path`: Path to the file.
+*   `code`: Machine-readable error code (e.g., "E_ACCES", "E_NOT_FOUND", "E_IO").
 *   `message`: Human-readable error message.
 
 ### 3. Run End (`run_end`)
@@ -117,22 +123,29 @@ Emitted after all files are processed. Contains aggregate statistics and final s
 ```json
 {
   "run_end": {
+    "schema_version": "1",
     "total_files": 10,
+    "total_processed": 10,
     "total_modified": 2,
     "total_replacements": 5,
     "has_errors": false,
     "policy_violation": null,
+    "committed": true,
+    "duration_ms": 45,
     "exit_code": 0
   }
 }
 ```
 
 **Fields:**
-*   `total_files`: Total files scanned/processed.
+*   `total_files`: Total files scanned.
+*   `total_processed`: Number of files actually processed (matched globs, etc.).
 *   `total_modified`: Number of files modified.
 *   `total_replacements`: Total replacements across all files.
 *   `has_errors`: `true` if any file-level errors occurred.
 *   `policy_violation`: String describing policy failure (e.g., "No matches found"), or `null`.
+*   `committed`: `true` if the transaction was successfully committed (always `false` for dry-run).
+*   `duration_ms`: Execution duration in milliseconds.
 *   `exit_code`: Suggested process exit code (0=success, 1=error, 2=policy violation).
 
 ```

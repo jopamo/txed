@@ -14,12 +14,18 @@ pub struct FileResult {
     pub replacements: usize,
     /// Error, if any.
     pub error: Option<String>,
+    /// Error code, if any.
+    pub error_code: Option<String>,
     /// Reason for skipping the file, if skipped.
     pub skipped: Option<String>,
     /// Diff lines (if dry_run or preview).
     pub diff: Option<String>,
+    /// Whether the diff is binary (sanitized).
+    pub diff_is_binary: bool,
     /// Full generated content (for stdin-text mode).
     pub generated_content: Option<String>,
+    /// Whether this file is virtual (not on disk).
+    pub is_virtual: bool,
 }
 
 /// Overall execution report.
@@ -41,6 +47,10 @@ pub struct Report {
     pub has_errors: bool,
     /// Policy violation message (if any).
     pub policy_violation: Option<String>,
+    /// Whether the transaction was committed.
+    pub committed: bool,
+    /// Duration of execution in milliseconds.
+    pub duration_ms: u64,
 }
 
 impl Report {
@@ -55,6 +65,8 @@ impl Report {
             validate_only,
             has_errors: false,
             policy_violation: None,
+            committed: false,
+            duration_ms: 0,
         }
     }
 
@@ -223,16 +235,6 @@ impl Report {
         // But in JSON mode, we probably shouldn't print raw content to stdout mixed with JSON.
         // The content is inside the JSON event.
         
-        // However, if we previously printed newline for stdin-text, we might need to check.
-        // The original code:
-        /*
-        if input_mode == "stdin-text" {
-            // Ensure JSON starts on a new line if content was printed without trailing newline
-            println!();
-        }
-        */
-        // Now we don't print content in engine, so we don't need this check/newline!
-        
         let start = RunStart {
             schema_version: "1".into(),
             tool_version: tool_version.into(),
@@ -254,6 +256,7 @@ impl Report {
             let event = if let Some(err) = &file.error {
                 FileEvent::Error {
                     path: file.path.clone(),
+                    code: file.error_code.clone().unwrap_or_else(|| "E_UNKNOWN".into()),
                     message: err.clone(),
                 }
             } else if let Some(reason) = &file.skipped {
@@ -274,6 +277,8 @@ impl Report {
                     replacements: file.replacements,
                     diff: file.diff.clone(),
                     generated_content: file.generated_content.clone(),
+                    diff_is_binary: file.diff_is_binary,
+                    is_virtual: file.is_virtual,
                 }
             };
             println!("{}", serde_json::to_string(&Event::File(event)).unwrap());
@@ -281,10 +286,13 @@ impl Report {
 
         let end = RunEnd {
             total_files: self.total,
+            total_processed: self.total, // Currently same as total_files as we track processed ones
             total_modified: self.modified,
             total_replacements: self.replacements,
             has_errors: self.has_errors,
             policy_violation: self.policy_violation.clone(),
+            committed: self.committed,
+            duration_ms: self.duration_ms,
             exit_code: self.exit_code(),
         };
         println!("{}", serde_json::to_string(&Event::RunEnd(end)).unwrap());

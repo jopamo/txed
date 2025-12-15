@@ -45,6 +45,31 @@ pub enum Error {
     TransactionFailure(String),
 }
 
+impl Error {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Error::Regex(_) => "E_REGEX",
+            Error::Io(e) => match e.kind() {
+                std::io::ErrorKind::NotFound => "E_NOT_FOUND",
+                std::io::ErrorKind::PermissionDenied => "E_ACCES",
+                std::io::ErrorKind::AlreadyExists => "E_EXIST",
+                _ => "E_IO",
+            },
+            Error::Persist(_) => "E_PERSIST",
+            Error::InvalidReplacement(_) => "E_INVALID_REPLACEMENT",
+            Error::AmbiguousReplacement(_) => "E_AMBIGUOUS_REPLACEMENT",
+            Error::Validation(_) => "E_VALIDATION",
+            Error::NoInputSources => "E_NO_INPUT",
+            Error::InputScopeConflict(_) => "E_INPUT_CONFLICT",
+            Error::OutputModeConflict(_) => "E_OUTPUT_CONFLICT",
+            Error::FeatureNotEnabled(_) => "E_FEATURE_DISABLED",
+            Error::FailedJobs(_) => "E_FAILED_JOBS",
+            Error::InvalidPath(_) => "E_INVALID_PATH",
+            Error::TransactionFailure(_) => "E_TRANSACTION",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct FailedJobs(pub Vec<(PathBuf, Error)>);
 

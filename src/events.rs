@@ -40,6 +40,10 @@ pub enum FileEvent {
         diff: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         generated_content: Option<String>,
+        #[serde(default)]
+        diff_is_binary: bool,
+        #[serde(default)]
+        is_virtual: bool,
     },
     Skipped {
         path: PathBuf,
@@ -47,6 +51,7 @@ pub enum FileEvent {
     },
     Error {
         path: PathBuf,
+        code: String,
         message: String,
     },
 }
@@ -66,9 +71,12 @@ pub enum SkipReason {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunEnd {
     pub total_files: usize,
+    pub total_processed: usize,
     pub total_modified: usize,
     pub total_replacements: usize,
     pub has_errors: bool,
     pub policy_violation: Option<String>,
+    pub committed: bool,
+    pub duration_ms: u64,
     pub exit_code: i32,
 }
