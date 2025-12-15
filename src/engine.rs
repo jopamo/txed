@@ -489,10 +489,10 @@ fn normalize_path(path: &Path, cwd: &Path) -> PathBuf {
         path
     };
 
-    let mut components = path.components();
+    let components = path.components();
     let mut filtered = PathBuf::new();
     let mut pushed = false;
-    while let Some(component) = components.next() {
+    for component in components {
         if component == Component::CurDir {
             continue;
         }

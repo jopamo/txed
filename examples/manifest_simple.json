@@ -1,0 +1,12 @@
+{
+  "files": ["src/main.rs", "src/lib.rs"],
+  "transaction": "all",
+  "operations": [
+    {
+      "type": "replace",
+      "find": "OldName",
+      "with": "NewName",
+      "limit": 1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "files": ["src/legacy.rs"],
+  "transaction": "all",
+  "operations": [
+    {
+      "type": "delete",
+      "find": "// TODO: remove next release.*",
+      "literal": false,
+      "multiline": true
+    },
+    {
+      "type": "replace",
+      "find": "get_(\\w+)_data()",
+      "with": "data().$1()",
+      "literal": false,
+      "expand": true
+    }
+  ]
+}

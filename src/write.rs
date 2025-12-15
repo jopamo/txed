@@ -5,22 +5,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 
-/// Options for file writing.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default)]
 pub struct WriteOptions {
-    /// If true, do not follow symbolic links (operate on symlink itself).
     pub no_follow_symlinks: bool,
-    /// Permissions handling mode.
     pub permissions: PermissionsMode,
-}
-
-impl Default for WriteOptions {
-    fn default() -> Self {
-        Self {
-            no_follow_symlinks: false,
-            permissions: PermissionsMode::default(),
-        }
-    }
 }
 
 /// A staged file write, ready to be committed.

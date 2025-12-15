@@ -3,7 +3,7 @@ use clap::Parser;
 use std::fs;
 use std::io::IsTerminal;
 
-use crate::cli::{Cli, Commands, OutputFormat, Transaction as CliTransaction, Symlinks as CliSymlinks, BinaryFileMode as CliBinaryFileMode, PermissionsMode as CliPermissionsMode, DefaultArgs};
+use crate::cli::{Cli, Commands, OutputFormat, PermissionsMode as CliPermissionsMode, DefaultArgs};
 use crate::input::{InputItem, InputMode};
 use crate::model::{Operation, Pipeline, LineRange, PermissionsMode};
 
@@ -222,12 +222,10 @@ fn try_main() -> Result<i32> {
             OutputFormat::Json
         } else if std::io::stdout().is_terminal() {
             OutputFormat::Diff
+        } else if let InputMode::StdinText = mode {
+            OutputFormat::Diff
         } else {
-            if let InputMode::StdinText = mode {
-                OutputFormat::Diff
-            } else {
-                OutputFormat::Json
-            }
+            OutputFormat::Json
         }
     });
 

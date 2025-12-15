@@ -35,7 +35,7 @@ pub fn resolve_input_mode(
     stdin_text: bool,
     rg_json: bool,
     files_arg: bool,
-    files: &Vec<PathBuf>,
+    files: &[PathBuf],
 ) -> InputMode {
     if stdin_text {
         InputMode::StdinText
@@ -46,10 +46,10 @@ pub fn resolve_input_mode(
     } else if stdin_paths {
         InputMode::StdinPathsNewline
     } else if files_arg {
-        InputMode::Auto(files.clone())
+        InputMode::Auto(files.to_vec())
     } else {
         // Default behavior: Auto mode
-        InputMode::Auto(files.clone())
+        InputMode::Auto(files.to_vec())
     }
 }
 

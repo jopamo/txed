@@ -13,57 +13,37 @@ pub struct ReplacementRange {
     pub end: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Transaction {
+    #[default]
     All,
     File,
 }
 
-impl Default for Transaction {
-    fn default() -> Self {
-        Self::All
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Symlinks {
+    #[default]
     Follow,
     Skip,
     Error,
 }
 
-impl Default for Symlinks {
-    fn default() -> Self {
-        Self::Follow
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum BinaryFileMode {
+    #[default]
     Skip,
     Error,
 }
 
-impl Default for BinaryFileMode {
-    fn default() -> Self {
-        Self::Skip
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum PermissionsMode {
+    #[default]
     Preserve,
     Fixed(u32),
-}
-
-impl Default for PermissionsMode {
-    fn default() -> Self {
-        Self::Preserve
-    }
 }
 
 /// A single text transformation operation.
@@ -143,7 +123,7 @@ pub enum Operation {
 }
 
 /// A complete transformation pipeline.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 pub struct Pipeline {
     /// Files to process.
     pub files: Vec<String>,
@@ -211,27 +191,6 @@ impl Pipeline {
                 range: None,
                 expand: false,
             }],
-            dry_run: false,
-            no_write: false,
-            require_match: false,
-            expect: None,
-            fail_on_change: false,
-            transaction: Transaction::default(),
-            symlinks: Symlinks::default(),
-            binary: BinaryFileMode::default(),
-            permissions: PermissionsMode::default(),
-            validate_only: false,
-            glob_include: None,
-            glob_exclude: None,
-        }
-    }
-}
-
-impl Default for Pipeline {
-    fn default() -> Self {
-        Self {
-            files: Vec::new(),
-            operations: Vec::new(),
             dry_run: false,
             no_write: false,
             require_match: false,

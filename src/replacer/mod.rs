@@ -22,6 +22,7 @@ pub struct Replacer {
 }
 
 impl Replacer {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         pattern: &str,
         replacement: &str,
@@ -199,12 +200,10 @@ impl Replacer {
                     } else {
                         re.replace_all(text, NoExpand(&self.replacement))
                     }
+                 } else if self.expand {
+                      re.replacen(text, self.max_replacements, &self.replacement[..])
                  } else {
-                    if self.expand {
-                         re.replacen(text, self.max_replacements, &self.replacement[..])
-                    } else {
-                         re.replacen(text, self.max_replacements, NoExpand(&self.replacement))
-                    }
+                      re.replacen(text, self.max_replacements, NoExpand(&self.replacement))
                  };
                  return (replaced, actual_replacements);
             }

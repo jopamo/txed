@@ -310,6 +310,16 @@ sd2 --fail-on-change --dry-run foo bar src/
 
 ---
 
+## 📂 Examples
+
+Check the `examples/` directory for ready-to-use recipes:
+
+*   [`examples/manifest_simple.json`](examples/manifest_simple.json): Basic replacement.
+*   [`examples/manifest_advanced.json`](examples/manifest_advanced.json): Regex, deletes, and capture expansion.
+*   [`examples/mcp_server.py`](examples/mcp_server.py): Python script to run `sd2` as a Model Context Protocol server.
+
+---
+
 ## Agent Mode (Manifests)
 
 Agents submit a **pipeline manifest** describing multi-file atomic edits.
