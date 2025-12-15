@@ -134,7 +134,7 @@ fn test_glob_absolute_path_extension_mismatch() {
         .arg(abs_path.to_str().unwrap())
         .assert()
         .failure()
-        .stderr(predicate::str::contains("No input sources specified"));
+        .stdout(predicate::str::contains("glob_exclude"));
 
     assert_eq!(fs::read_to_string(&abs_path).unwrap(), "foo");
 }

@@ -54,5 +54,5 @@ fn test_quiet_json_prints_json() {
        .arg(file.to_str().unwrap())
        .assert()
        .success()
-       .stdout(predicates::str::contains("\"replacements\": 1"));
+       .stdout(predicates::str::contains("\"replacements\":1"));
 }

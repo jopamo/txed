@@ -9,20 +9,20 @@ use crate::transaction::TransactionManager;
 use similar::{ChangeTag, TextDiff};
 use std::fs;
 use std::path::PathBuf;
-use globset::{Glob, GlobSetBuilder};
+use globset::{Glob, GlobSet, GlobSetBuilder};
 
 /// Execute a pipeline and produce a report.
 pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report> {
-    // Filter inputs based on glob_include and glob_exclude
-    let inputs = filter_inputs(inputs, &pipeline.glob_include, &pipeline.glob_exclude)?;
-
     // validate semantic constraints
     if inputs.is_empty() {
-         return Err(Error::Validation("No input sources specified (or all filtered out)".into()));
+         return Err(Error::Validation("No input sources specified".into()));
     }
     if pipeline.operations.is_empty() {
         return Err(Error::Validation("No operations specified".into()));
     }
+
+    // Build glob sets
+    let (include_set, exclude_set) = build_glob_sets(&pipeline.glob_include, &pipeline.glob_exclude)?;
 
     let validate_only = pipeline.validate_only;
     // If validate_only is set, force dry_run to true
@@ -39,6 +39,44 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
     };
 
     for input in inputs {
+        // Check globs first
+        let path_for_glob = match &input {
+            InputItem::Path(p) => Some(p.as_path()),
+            InputItem::RipgrepMatch { path, .. } => Some(path.as_path()),
+            InputItem::StdinText(_) => None,
+        };
+
+        if let Some(p) = path_for_glob {
+             if let Some(ref set) = include_set {
+                if !set.is_match(p) {
+                    // Report skipped (glob include mismatch)
+                     report.add_result(FileResult {
+                        path: p.to_path_buf(),
+                        modified: false,
+                        replacements: 0,
+                        error: None,
+                        skipped: Some("glob exclude".into()), // "glob exclude" covers "not in include"
+                        diff: None,
+                    });
+                    continue;
+                }
+             }
+             if let Some(ref set) = exclude_set {
+                 if set.is_match(p) {
+                     // Report skipped (glob exclude)
+                      report.add_result(FileResult {
+                        path: p.to_path_buf(),
+                        modified: false,
+                        replacements: 0,
+                        error: None,
+                        skipped: Some("glob exclude".into()),
+                        diff: None,
+                    });
+                     continue;
+                 }
+             }
+        }
+
         match input {
             InputItem::Path(path_buf) => {
                 let path_str = path_buf.to_string_lossy().into_owned();
@@ -99,13 +137,12 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
     Ok(report)
 }
 
-fn filter_inputs(
-    inputs: Vec<InputItem>,
+fn build_glob_sets(
     include: &Option<Vec<String>>,
     exclude: &Option<Vec<String>>,
-) -> Result<Vec<InputItem>> {
+) -> Result<(Option<GlobSet>, Option<GlobSet>)> {
     if include.is_none() && exclude.is_none() {
-        return Ok(inputs);
+        return Ok((None, None));
     }
 
     let include_set = if let Some(pats) = include {
@@ -128,36 +165,7 @@ fn filter_inputs(
         None
     };
 
-    let mut filtered = Vec::new();
-    for input in inputs {
-        let path = match input {
-            InputItem::Path(ref p) => Some(p),
-            InputItem::RipgrepMatch { ref path, .. } => Some(path),
-            InputItem::StdinText(_) => None,
-        };
-
-        if let Some(p) = path {
-            // Include logic: If include globs exist, must match at least one.
-            if let Some(ref set) = include_set {
-                if !set.is_match(p) {
-                        continue;
-                }
-            }
-            
-            // Exclude logic: If exclude globs exist, must NOT match any.
-            if let Some(ref set) = exclude_set {
-                if set.is_match(p) {
-                    continue;
-                }
-            }
-            
-            filtered.push(input);
-        } else {
-            // Always include stdin text
-            filtered.push(input);
-        }
-    }
-    Ok(filtered)
+    Ok((include_set, exclude_set))
 }
 
 fn process_text(
@@ -507,47 +515,19 @@ mod tests {
     }
 
     #[test]
-    fn filter_inputs_include_exclude_paths() {
-        let inputs = vec![
-            InputItem::Path(PathBuf::from("src/main.rs")),
-            InputItem::Path(PathBuf::from("src/lib.rs")),
-            InputItem::Path(PathBuf::from("README.md")),
-            InputItem::StdinText("hi".into()),
-        ];
-
+    fn build_glob_sets_valid() {
         let include = Some(vec!["src/*.rs".into()]);
         let exclude = Some(vec!["*lib.rs".into()]);
-
-        let out = filter_inputs(inputs, &include, &exclude).unwrap();
-
-        assert_eq!(out.len(), 2);
-
-        let mut got_main = false;
-        let mut got_stdin = false;
-
-        for it in out {
-            match it {
-                InputItem::Path(p) => {
-                    if p == PathBuf::from("src/main.rs") {
-                        got_main = true;
-                    }
-                }
-                InputItem::StdinText(_) => got_stdin = true,
-                _ => {} // Ignore other variants for this test
-            }
-        }
-
-        assert!(got_main);
-        assert!(got_stdin);
+        let (inc, exc) = build_glob_sets(&include, &exclude).unwrap();
+        assert!(inc.is_some());
+        assert!(exc.is_some());
     }
 
     #[test]
-    fn filter_inputs_invalid_glob_is_validation_error() {
-        let inputs = vec![InputItem::Path(PathBuf::from("src/main.rs"))];
-        let include = Some(vec!["[".into()]); // invalid glob
-        let err = filter_inputs(inputs, &include, &None).unwrap_err();
-        let msg = err.to_string();
-        assert!(msg.contains("Invalid glob"));
+    fn build_glob_sets_invalid() {
+        let include = Some(vec!["[".into()]);
+        let err = build_glob_sets(&include, &None).unwrap_err();
+        assert!(err.to_string().contains("Invalid glob"));
     }
 
     #[test]
@@ -606,17 +586,17 @@ mod tests {
         assert_eq!(report.exit_code(), 2);
     }
 
-    #[test]
-    fn execute_fail_on_change_fails_if_modified() {
-        let mut p = pipeline(true, false); // dry_run
-        p.fail_on_change = true;
-        p.operations = vec![op_replace("foo", "bar")];
-        
-        let report = execute(p, vec![InputItem::StdinText("foo".into())]).unwrap();
-        
-        assert!(report.modified > 0);
-        assert!(report.policy_violation.is_some());
-        assert!(report.policy_violation.as_ref().unwrap().contains("Changes detected"));
-        assert_eq!(report.exit_code(), 2);
+        #[test]
+        fn execute_fail_on_change_fails_if_modified() {
+            let mut p = pipeline(true, false); // dry_run
+            p.fail_on_change = true;
+            p.operations = vec![op_replace("foo", "bar")];
+            
+            let report = execute(p, vec![InputItem::StdinText("foo".into())]).unwrap();
+            
+            assert!(report.modified > 0);
+            assert!(report.policy_violation.is_some());
+            assert!(report.policy_violation.as_ref().unwrap().contains("Changes detected"));
+            assert_eq!(report.exit_code(), 2);
+        }
     }
-}

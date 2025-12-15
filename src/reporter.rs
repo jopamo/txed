@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use crate::events::{Event, RunStart, FileEvent, RunEnd, Policies, SkipReason};
+use crate::model::Pipeline;
 
 /// Result of processing a single file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,10 +155,62 @@ impl Report {
         }
     }
 
-    /// Print report as JSON.
-    pub fn print_json(&self) {
-        let json = serde_json::to_string_pretty(self).expect("Failed to serialize report");
-        println!("{}", json);
+    /// Print report as JSON events.
+    pub fn print_json(&self, pipeline: &Pipeline, tool_version: &str, mode: &str, input_mode: &str) {
+        let start = RunStart {
+            schema_version: "1".into(),
+            tool_version: tool_version.into(),
+            mode: mode.into(),
+            input_mode: input_mode.into(),
+            transaction_mode: format!("{:?}", pipeline.transaction).to_lowercase(),
+            dry_run: pipeline.dry_run,
+            validate_only: pipeline.validate_only,
+            no_write: pipeline.no_write,
+            policies: Policies {
+                require_match: pipeline.require_match,
+                expect: pipeline.expect,
+                fail_on_change: pipeline.fail_on_change,
+            },
+        };
+        println!("{}", serde_json::to_string(&Event::RunStart(start)).unwrap());
+
+        for file in &self.files {
+            let event = if let Some(err) = &file.error {
+                FileEvent::Error {
+                    path: file.path.clone(),
+                    message: err.clone(),
+                }
+            } else if let Some(reason) = &file.skipped {
+                 let reason_enum = match reason.as_str() {
+                    "binary file" => SkipReason::Binary,
+                    "symlink" => SkipReason::Symlink,
+                    "glob exclude" => SkipReason::GlobExclude,
+                     _ => SkipReason::NotModified, 
+                };
+                FileEvent::Skipped {
+                    path: file.path.clone(),
+                    reason: reason_enum,
+                }
+            } else {
+                FileEvent::Success {
+                    path: file.path.clone(),
+                    modified: file.modified,
+                    replacements: file.replacements,
+                    diff: file.diff.clone(),
+                }
+            };
+            println!("{}", serde_json::to_string(&Event::File(event)).unwrap());
+        }
+
+        let end = RunEnd {
+            total_files: self.total,
+            total_modified: self.modified,
+            total_replacements: self.replacements,
+            has_errors: self.has_errors,
+            policy_violation: self.policy_violation.clone(),
+            exit_code: self.exit_code(),
+        };
+        println!("{}", serde_json::to_string(&Event::RunEnd(end)).unwrap());
     }
 
     /// Print report in Agent-friendly XML format.

@@ -10,6 +10,7 @@ use crate::model::{Operation, Pipeline, LineRange, PermissionsMode};
 mod cli;
 mod engine;
 mod error;
+mod events;
 mod input;
 mod model;
 mod replacer;
@@ -116,8 +117,8 @@ fn main() -> Result<()> {
                         }    };
 
     // 2. Build Pipeline
-    let pipeline = if let Some(path) = manifest_path {
-        let content = fs::read_to_string(&path).context(format!("reading manifest from {:?}", path))?;
+    let pipeline = if let Some(path) = &manifest_path {
+        let content = fs::read_to_string(path).context(format!("reading manifest from {:?}", path))?;
         let mut p: Pipeline = serde_json::from_str(&content).context("parsing manifest")?;
 
         // Apply CLI overrides if present
@@ -187,6 +188,7 @@ fn main() -> Result<()> {
     };
 
     // 3. Execute
+    let pipeline_for_report = pipeline.clone();
     let report = engine::execute(pipeline, inputs)?;
 
     // 4. Report
@@ -199,9 +201,18 @@ fn main() -> Result<()> {
             OutputFormat::Json
         }
     });
+
+    let mode_str = if manifest_path.is_some() { "apply" } else { "cli" };
+    let input_mode_str = match mode {
+        InputMode::Auto(_) => "args",
+        InputMode::StdinPathsNewline => "stdin-paths",
+        InputMode::StdinPathsNul => "files0",
+        InputMode::StdinText => "stdin-text",
+        InputMode::RipgrepJson => "rg-json",
+    };
     
     match format {
-        OutputFormat::Json => report.print_json(),
+        OutputFormat::Json => report.print_json(&pipeline_for_report, env!("CARGO_PKG_VERSION"), mode_str, input_mode_str),
         OutputFormat::Agent => report.print_agent(),
         OutputFormat::Diff => if args.quiet { report.print_errors_only() } else { report.print_human() },
         OutputFormat::Summary => if args.quiet { report.print_errors_only() } else { report.print_summary() },
