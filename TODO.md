@@ -244,6 +244,13 @@ These should be enforced in engine/report as policy checks.
     * else if stdout is tty, diff
     * else json
 
+* [ ] **`--format agent` (Agent-friendly output)**
+  **Rust notes**
+
+  * use `BufferedAgentSink` from `src/rgjson.rs`
+  * emit XML-style `<file path="...">` blocks
+  * group matches by file to avoid interleaving
+
 ---
 
 ## 🛠 Feature Implementation Details
@@ -265,6 +272,13 @@ These should be enforced in engine/report as policy checks.
     * `InputItem::RgSpan { path, line, byte_offset, match_len }`
     * `InputItem::StdinText(String)`
 
+* [ ] **`--rg-json` span targeting**
+  **Rust notes**
+
+  * Currently `src/input.rs` only extracts file paths from `rg --json`.
+  * Need to parse `submatches` and `absolute_offset` from `RgMessage`.
+  * Create `InputItem::RgSpan` and feed to engine to limit replacement scope.
+
 * [ ] **Transaction Manager**
 
   * create `src/transaction.rs`
@@ -274,7 +288,7 @@ These should be enforced in engine/report as policy checks.
     * `commit_all(staged: Vec<StagedFile>) -> Result<()>`
   * store temp file handles in `StagedFile` so they stay alive until commit
 
-* [ ] **Range limiting**
+* [x] **Range limiting**
 
   * implement at match-collection stage, not at write stage
   * recommended flow:
@@ -285,7 +299,7 @@ These should be enforced in engine/report as policy checks.
     4. filter matches by range
     5. apply replacements
 
-* [ ] **Post-filtering**
+* [x] **Post-filtering**
 
   * after collecting paths from stdin/args/manifest:
 
