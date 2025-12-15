@@ -1,8 +1,8 @@
 use crate::cli::ApplyArgs;
 use crate::error::{Error, Result};
-use std::io::{self, BufRead, Read};
+use std::io::{self, BufRead, Read, BufReader};
 use std::path::PathBuf;
-use serde::Deserialize;
+use crate::rgjson::{RgMessage, RgKind, stream_rg_json_ndjson, RgSink};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum InputMode {
@@ -38,73 +38,6 @@ pub fn resolve_input_mode(args: &ApplyArgs) -> InputMode {
     } else {
         InputMode::Auto(args.files.clone())
     }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type")]
-#[allow(dead_code)]
-pub enum RgMessage {
-    #[serde(rename = "match")]
-    Match {
-        path: RgPath,
-        lines: RgLines,
-        line_number: Option<u64>,
-        absolute_offset: u64,
-        submatches: Vec<RgSubmatch>,
-    },
-    #[serde(rename = "begin")]
-    Begin {
-        path: RgPath,
-    },
-    #[serde(rename = "end")]
-    End {
-        path: RgPath,
-        binary_offset: Option<u64>,
-        stats: RgStats,
-    },
-    #[serde(rename = "summary")]
-    Summary {
-        elapsed_total: RgDuration,
-        stats: RgStats,
-    },
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-pub struct RgPath {
-    pub text: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-pub struct RgLines {
-    pub text: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-pub struct RgSubmatch {
-    pub match_text: String,
-    pub start: usize,
-    pub end: usize,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-pub struct RgStats {
-    pub elapsed: RgDuration,
-    pub searches: u64,
-    pub searches_with_match: u64,
-    pub matches: u64,
-    pub matched_lines: u64,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-pub struct RgDuration {
-    pub secs: u64,
-    pub nanos: u64,
-    pub human: String,
 }
 
 /// Read newline-delimited paths from stdin.
@@ -154,30 +87,39 @@ pub fn read_stdin_text() -> Result<String> {
     Ok(buffer)
 }
 
+struct PathCollectorSink {
+    paths: Vec<PathBuf>,
+}
+
+impl RgSink for PathCollectorSink {
+    fn handle(&mut self, msg: RgMessage) -> anyhow::Result<()> {
+        match msg.kind {
+            RgKind::Begin => {
+                if let Some(data) = msg.data {
+                    if let Some(path_obj) = data.path {
+                        let os_str = path_obj.to_os_string()?;
+                        self.paths.push(PathBuf::from(os_str));
+                    }
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
+
 /// Read ripgrep JSON output and extract paths.
-/// TODO: In the future, this should also extract match spans for targeted replacement.
+/// Uses robust handling for bytes vs text in paths.
 pub fn read_rg_json() -> Result<Vec<PathBuf>> {
     let stdin = io::stdin();
-    let mut paths = Vec::new();
+    let reader = BufReader::new(stdin.lock());
+    let mut sink = PathCollectorSink { paths: Vec::new() };
     
-    for line in stdin.lock().lines() {
-        let line = line.map_err(Error::Io)?;
-        if line.trim().is_empty() { continue; }
-        
-        // We accept that some lines might not be valid JSON or might not be the messages we care about
-        // But for --rg-json, we expect a stream of these.
-        if let Ok(msg) = serde_json::from_str::<RgMessage>(&line) {
-             match msg {
-                 RgMessage::Begin { path } => {
-                     paths.push(PathBuf::from(path.text));
-                 }
-                 _ => {}
-             }
-        }
-    }
+    stream_rg_json_ndjson(reader, &mut sink).map_err(|e| Error::Validation(format!("Failed to parse rg json: {}", e)))?;
+    
     // Deduplicate? Rg usually groups by file, but we might get multiple blocks?
     // A simple vector is fine for now, dedup can happen later if needed.
-    paths.sort();
-    paths.dedup();
-    Ok(paths)
+    sink.paths.sort();
+    sink.paths.dedup();
+    Ok(sink.paths)
 }

@@ -6,6 +6,7 @@ mod write;
 mod engine;
 mod reporter;
 mod input;
+mod rgjson;
 
 use clap::Parser;
 use std::fs;

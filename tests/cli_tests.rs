@@ -100,12 +100,13 @@ fn test_rg_json() {
     fs::write(&file_path, "hello foo world").unwrap();
     
     // Construct rg-json input that points to this file
+    // Correct ripgrep JSON structure has "data" field
     let p = file_path.to_str().unwrap();
     let json_input = format!(
         "{}\n{}\n{}\n",
-        format!(r#"{{"type":"begin","path":{{"text":"{}"}}}}"#, p),
-        format!(r#"{{"type":"match","path":{{"text":"{}"}},"lines":{{"text":"hello foo world"}},"line_number":1,"absolute_offset":0,"submatches":[{{"match_text":"foo","start":6,"end":9}}]}}"#, p),
-        format!(r#"{{"type":"end","path":{{"text":"{}"}},"binary_offset":null,"stats":{{"elapsed":{{"secs":0,"nanos":0,"human":"0s"}},"searches":1,"searches_with_match":1,"matches":1,"matched_lines":1}}}}"#, p)
+        format!(r#"{{"type":"begin","data":{{"path":{{"text":"{}"}}}}}}"#, p),
+        format!(r#"{{"type":"match","data":{{"path":{{"text":"{}"}},"lines":{{"text":"hello foo world"}},"line_number":1,"absolute_offset":0,"submatches":[{{"match_text":"foo","start":6,"end":9}}]}}}}"#, p),
+        format!(r#"{{"type":"end","data":{{"path":{{"text":"{}"}},"binary_offset":null,"stats":{{"elapsed":{{"secs":0,"nanos":0,"human":"0s"}},"searches":1,"searches_with_match":1,"matches":1,"matched_lines":1}}}}}}"#, p)
     );
 
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
