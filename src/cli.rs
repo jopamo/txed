@@ -98,9 +98,9 @@ pub struct ApplyArgs {
     #[arg(long = "no-unicode")]
     pub no_unicode: bool,
 
-    /// Maximum number of replacements per file (0 = unlimited).
-    #[arg(short = 'n', long = "max-replacements", visible_alias = "limit", default_value_t = 0)]
-    pub max_replacements: usize,
+    /// Maximum number of replacements per file.
+    #[arg(short = 'n', long = "max-replacements", visible_alias = "limit")]
+    pub max_replacements: Option<usize>,
 
     // ========================================================================
     // Output options

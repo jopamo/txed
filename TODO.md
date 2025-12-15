@@ -106,7 +106,7 @@ Implement as a mutually exclusive **input-mode state machine** that is explicit 
 
 ### Scope Controls
 
-* [ ] **`--limit`** alias for `--max-replacements`
+* [x] **`--limit`** alias for `--max-replacements`
   **Rust notes**
 
   * in `clap`, you can mark `--limit` as `alias = "max-replacements"`

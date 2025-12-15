@@ -100,14 +100,12 @@ fn test_rg_json() {
     fs::write(&file_path, "hello foo world").unwrap();
     
     // Construct rg-json input that points to this file
+    let p = file_path.to_str().unwrap();
     let json_input = format!(
-        r#"{{"type":"begin","path":{{"text":"{}"}}}}
-{{"type":"match","path":{{"text":"{}"}},"lines":{{"text":"hello foo world"}},"line_number":1,"absolute_offset":0,"submatches":[{{"match_text":"foo","start":6,"end":9}}]}}
-{{"type":"end","path":{{"text":"{}"}},"binary_offset":null,"stats":{{"elapsed":{{"secs":0,"nanos":0,"human":"0s"}},"searches":1,"searches_with_match":1,"matches":1,"matched_lines":1}}}}
-"#,
-        file_path.to_str().unwrap(),
-        file_path.to_str().unwrap(),
-        file_path.to_str().unwrap()
+        "{}\n{}\n{}\n",
+        format!(r#"{{"type":"begin","path":{{"text":"{}"}}}}"#, p),
+        format!(r#"{{"type":"match","path":{{"text":"{}"}},"lines":{{"text":"hello foo world"}},"line_number":1,"absolute_offset":0,"submatches":[{{"match_text":"foo","start":6,"end":9}}]}}"#, p),
+        format!(r#"{{"type":"end","path":{{"text":"{}"}},"binary_offset":null,"stats":{{"elapsed":{{"secs":0,"nanos":0,"human":"0s"}},"searches":1,"searches_with_match":1,"matches":1,"matched_lines":1}}}}"#, p)
     );
 
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
@@ -122,4 +120,24 @@ fn test_rg_json() {
     
     let content = fs::read_to_string(&file_path).unwrap();
     assert_eq!(content, "hello bar world");
+}
+
+#[test]
+fn test_limit_alias() {
+    let dir = tempdir().unwrap();
+    let file_path = dir.path().join("test_limit.txt");
+    fs::write(&file_path, "foo foo foo").unwrap();
+
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    cmd.arg("apply")
+        .arg("foo")
+        .arg("bar")
+        .arg("--limit")
+        .arg("1")
+        .arg(file_path.to_str().unwrap())
+        .assert()
+        .success();
+    
+    let content = fs::read_to_string(&file_path).unwrap();
+    assert_eq!(content, "bar foo foo");
 }

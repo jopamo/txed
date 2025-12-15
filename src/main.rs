@@ -64,7 +64,7 @@ fn apply(args: cli::ApplyArgs) -> Result<(), Box<dyn std::error::Error>> {
             *multiline = args.multiline;
             *dot_matches_newline = args.dot_matches_newline;
             *no_unicode = args.no_unicode;
-            *limit = args.max_replacements;
+            *limit = args.max_replacements.unwrap_or(0);
         }
 
         pipeline.dry_run = args.preview;
