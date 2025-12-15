@@ -272,14 +272,14 @@ These should be enforced in engine/report as policy checks.
     * `InputItem::RgSpan { path, line, byte_offset, match_len }`
     * `InputItem::StdinText(String)`
 
-* [ ] **`--rg-json` span targeting**
+* [x] **`--rg-json` span targeting**
   **Rust notes**
 
   * Currently `src/input.rs` only extracts file paths from `rg --json`.
   * Need to parse `submatches` and `absolute_offset` from `RgMessage`.
   * Create `InputItem::RgSpan` and feed to engine to limit replacement scope.
 
-* [ ] **Transaction Manager**
+* [x] **Transaction Manager**
 
   * create `src/transaction.rs`
   * implement:
@@ -308,7 +308,7 @@ These should be enforced in engine/report as policy checks.
     * apply glob include/exclude
   * track why something was excluded for JSON events
 
-* [ ] **Binary Detection**
+* [x] **Binary Detection**
 
   * do it before `String::from_utf8` conversions
   * if binary and mode is skip:
@@ -322,7 +322,7 @@ These should be enforced in engine/report as policy checks.
 
 ### Reporting (`src/report.rs`)
 
-* [ ] **Policy Checks**
+* [x] **Policy Checks**
 
   * implement a single function:
 
