@@ -38,7 +38,7 @@ insta = "1.44.3"
 proptest = "1.9.0"
 
 [features]
-default = []
+default = ["parallel"]
 walk = ["dep:ignore"]
 parallel = ["dep:rayon"]
 mapped = ["dep:memmap2"]

@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use crate::model::{Pipeline, Operation, Transaction, Symlinks, BinaryFileMode};
 use crate::replacer::Replacer;
-use crate::write::{write_file, stage_file, WriteOptions};
+use crate::write::{write_file, stage_file, WriteOptions, StagedEntry};
 use crate::reporter::{Report, FileResult};
 use crate::input::InputItem;
 use crate::model::ReplacementRange;
@@ -11,6 +11,8 @@ use std::fs;
 use std::path::{Path, PathBuf, Component};
 use std::env;
 use globset::{Glob, GlobSet, GlobSetBuilder};
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
 
 /// Execute a pipeline and produce a report.
 pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report> {
@@ -40,8 +42,10 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
     };
 
     let cwd = env::current_dir().map_err(|e| Error::Validation(format!("Failed to get current directory: {}", e)))?;
+    let should_stage = pipeline.transaction == Transaction::All;
 
-    for input in inputs {
+    // Define the processing function (closure)
+    let process_item = |input: InputItem| -> (FileResult, Option<StagedEntry>) {
         // Check globs first
         let path_for_glob = match &input {
             InputItem::Path(p) => Some(p.as_path()),
@@ -54,29 +58,27 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
              if let Some(ref set) = include_set {
                 if !set.is_match(&normalized) {
                     // Report skipped (glob include mismatch)
-                     report.add_result(FileResult {
+                     return (FileResult {
                         path: p.to_path_buf(),
                         modified: false,
                         replacements: 0,
                         error: None,
                         skipped: Some("glob exclude".into()), // "glob exclude" covers "not in include"
                         diff: None,
-                    });
-                    continue;
+                    }, None);
                 }
              }
              if let Some(ref set) = exclude_set {
                  if set.is_match(&normalized) {
                      // Report skipped (glob exclude)
-                      report.add_result(FileResult {
+                      return (FileResult {
                         path: p.to_path_buf(),
                         modified: false,
                         replacements: 0,
                         error: None,
                         skipped: Some("glob exclude".into()),
                         diff: None,
-                    });
-                     continue;
+                    }, None);
                  }
              }
         }
@@ -84,35 +86,40 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
         match input {
             InputItem::Path(path_buf) => {
                 let path_str = path_buf.to_string_lossy().into_owned();
-                let result = process_file(&path_str, &pipeline.operations, &pipeline, None, &mut tm);
-                let has_error = result.error.is_some();
-                report.add_result(result);
-
-                if has_error {
-                    break;
-                }
+                process_file(&path_str, &pipeline.operations, &pipeline, None, should_stage)
             }
             InputItem::RipgrepMatch { path, matches } => {
                 let path_str = path.to_string_lossy().into_owned();
-                let result = process_file(&path_str, &pipeline.operations, &pipeline, Some(&matches), &mut tm);
-                let has_error = result.error.is_some();
-                report.add_result(result);
-
-                if has_error {
-                    break;
-                }
+                process_file(&path_str, &pipeline.operations, &pipeline, Some(&matches), should_stage)
             }
             InputItem::StdinText(text) => {
                  let result = process_text(text, &pipeline.operations, &pipeline);
-                 let has_error = result.error.is_some();
-                 report.add_result(result);
-                 
-                 if has_error {
-                    break;
-                }
+                 (result, None)
             }
         }
-    }
+    };
+
+    // Execute in parallel or serial
+    #[cfg(feature = "parallel")]
+    let results: Vec<(FileResult, Option<StagedEntry>)> = inputs.into_par_iter().map(process_item).collect();
+
+    #[cfg(not(feature = "parallel"))]
+    let results: Vec<(FileResult, Option<StagedEntry>)> = inputs.into_iter().map(process_item).collect();
+
+    // Aggregate results
+    for (result, staged) in results {
+        let has_error = result.error.is_some();
+        report.add_result(result);
+
+        if let Some(s) = staged {
+            if let Some(manager) = &mut tm {
+                manager.stage(s);
+            }
+        }
+
+                if has_error {
+                    break;
+                }    }
 
     // Policy checks
     if pipeline.require_match && report.replacements == 0 {
@@ -220,8 +227,8 @@ fn process_file(
     operations: &[Operation],
     pipeline: &Pipeline,
     matches: Option<&[ReplacementRange]>,
-    tm: &mut Option<TransactionManager>,
-) -> FileResult {
+    should_stage: bool,
+) -> (FileResult, Option<StagedEntry>) {
     let path_buf = PathBuf::from(path);
 
     // Check for symlinks
@@ -232,24 +239,24 @@ fn process_file(
                     // Continue to read
                 }
                 Symlinks::Skip => {
-                    return FileResult {
+                    return (FileResult {
                         path: path_buf,
                         modified: false,
                         replacements: 0,
                         error: None,
                         skipped: Some("symlink".into()),
                         diff: None,
-                    };
+                    }, None);
                 }
                 Symlinks::Error => {
-                    return FileResult {
+                    return (FileResult {
                         path: path_buf,
                         modified: false,
                         replacements: 0,
                         error: Some("Encountered symlink with --symlinks error".into()),
                         skipped: None,
                         diff: None,
-                    };
+                    }, None);
                 }
             }
         }
@@ -258,45 +265,38 @@ fn process_file(
     // Read file content
     let content_bytes = match fs::read(path) {
         Ok(b) => b,
-        Err(e) => return FileResult {
+        Err(e) => return (FileResult {
             path: path_buf,
             modified: false,
             replacements: 0,
             error: Some(e.to_string()),
             skipped: None,
             diff: None,
-        }
+        }, None)
     };
 
-    // Check for binary content (simple heuristic: look for null byte)
-    // We only check the first 8KB to avoid scanning massive files entirely if unnecessary, 
-    // although for correctness on the whole file we should scan all. 
-    // `grep` usually checks the first few KB.
-    // However, if we are about to load it all into a String, we might as well check it all 
-    // or rely on `String::from_utf8` failing.
-    // But `from_utf8` fails on invalid UTF-8, not necessarily just "binary" (though binary often has invalid utf8).
-    // The requirement is specific about 0x00.
+    // Check for binary content
     if content_bytes.contains(&0) {
         match pipeline.binary {
             BinaryFileMode::Skip => {
-                 return FileResult {
+                 return (FileResult {
                     path: path_buf,
                     modified: false,
                     replacements: 0,
                     error: None,
                     skipped: Some("binary file".into()),
                     diff: None,
-                };
+                }, None);
             }
             BinaryFileMode::Error => {
-                return FileResult {
+                return (FileResult {
                     path: path_buf,
                     modified: false,
                     replacements: 0,
                     error: Some("Binary file detected".into()),
                     skipped: None,
                     diff: None,
-                };
+                }, None);
             }
         }
     }
@@ -312,51 +312,67 @@ fn process_file(
                     permissions: pipeline.permissions.clone(),
                 };
                 
-                if let Some(manager) = tm {
+                if should_stage {
                     // Stage
                     match stage_file(&path_buf, new_content.as_bytes(), &options) {
-                        Ok(staged) => manager.stage(staged),
-                        Err(e) => return FileResult {
+                        Ok(staged) => (FileResult {
+                            path: path_buf,
+                            modified,
+                            replacements,
+                            error: None,
+                            skipped: None,
+                            diff,
+                        }, Some(staged)),
+                        Err(e) => (FileResult {
                             path: path_buf,
                             modified: false,
                             replacements: 0,
                             error: Some(e.to_string()),
                             skipped: None,
                             diff: None,
-                        },
+                        }, None),
                     }
                 } else {
                     // Write immediately
                     if let Err(e) = write_file(&path_buf, new_content.as_bytes(), &options) {
-                         return FileResult {
+                         return (FileResult {
                             path: path_buf,
                             modified: false,
                             replacements: 0,
                             error: Some(e.to_string()),
                             skipped: None,
                             diff: None,
-                        };
+                        }, None);
                     }
+                    
+                    (FileResult {
+                        path: path_buf,
+                        modified,
+                        replacements,
+                        error: None,
+                        skipped: None,
+                        diff,
+                    }, None)
                 }
-            }
-
-            FileResult {
-                path: path_buf,
-                modified,
-                replacements,
-                error: None,
-                skipped: None,
-                diff,
+            } else {
+                 (FileResult {
+                    path: path_buf,
+                    modified,
+                    replacements,
+                    error: None,
+                    skipped: None,
+                    diff,
+                }, None)
             }
         },
-        Err(e) => FileResult {
+        Err(e) => (FileResult {
             path: path_buf,
             modified: false,
             replacements: 0,
             error: Some(e.to_string()),
             skipped: None,
             diff: None,
-        },
+        }, None),
     }
 }
 
