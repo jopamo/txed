@@ -52,13 +52,13 @@ What’s left is mostly **structured output stability**, **consistency**, and **
 
 ### 3) Expand tests for JSON events
 
-* [ ] Golden-style tests for `--format json`:
+* [x] Golden-style tests for `--format json`:
 
   * stable keys present
   * per-file arrays contain expected stats
   * skip reasons match expected enum strings
   * validate-only includes `"validate_only": true`
-* [ ] Tests for “no writes happened” in:
+* [x] Tests for “no writes happened” in:
 
   * `--no-write`
   * `--stdin-text`

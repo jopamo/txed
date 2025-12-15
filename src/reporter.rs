@@ -151,6 +151,10 @@ impl Report {
 
     /// Print report as JSON events.
     pub fn print_json(&self, pipeline: &Pipeline, tool_version: &str, mode: &str, input_mode: &str) {
+        if input_mode == "stdin-text" {
+            // Ensure JSON starts on a new line if content was printed without trailing newline
+            println!();
+        }
         let start = RunStart {
             schema_version: "1".into(),
             tool_version: tool_version.into(),
