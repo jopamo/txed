@@ -139,19 +139,13 @@ impl Report {
 
     /// Determine the appropriate exit code for this report.
     pub fn exit_code(&self) -> i32 {
+        use crate::exit_codes;
         if self.policy_violation.is_some() {
-            2
+            exit_codes::POLICY_VIOLATION
         } else if self.has_errors {
-            1
-        } else if self.modified == 0 && self.total > 0 {
-            // Check if all files were skipped or just no matches
-            // Standard diff/grep: exit 1 if no changes/matches found.
-            // If we have errors, we already returned 1.
-            // If we have skipped files, strictly speaking they are not "errors" but "warnings" usually.
-            // But if I asked to change files and nothing changed, exit 1 is appropriate.
-            1 
+            exit_codes::ERROR
         } else {
-            0
+            exit_codes::SUCCESS
         }
     }
 

@@ -44,16 +44,7 @@ fn test_symlinks_skip() {
        .arg(link.to_str().unwrap())
        .assert()
        // Even if skipped, it might return success if no other errors occur. 
-       // If total files processed > 0 but no matches (because skipped), 
-       // it might exit 1 depending on how we handle "no matches found" logic vs "skipped".
-       // engine.rs says: if pipeline.require_match && report.replacements == 0 -> policy violation.
-       // But by default require_match is false.
-       // report.exit_code() returns 1 if modified == 0 && total > 0.
-       // If we skip, is it counted in 'total'? 
-       // In engine.rs: report.add_result(result) is called. result.skipped is Some.
-       // In reporter.rs: self.total += 1.
-       // So total > 0. modified == 0. So exit code should be 1.
-       .failure(); 
+       .success(); 
 
     // Target should NOT be modified
     assert_eq!(fs::read_to_string(&target).unwrap(), "foo");
@@ -122,9 +113,7 @@ fn test_binary_skip_default() {
        .arg(bin_file.to_str().unwrap())
        .assert()
        // Should default to skip, so no error (unless all skipped is an error, which we decided is exit code 1 if total > 0 modified == 0)
-       // Wait, if I supply one file and it is skipped, exit code is 1 because "no changes".
-       // But it shouldn't be a *runtime error* (stderr output about parsing), just a "nothing done".
-       .failure(); 
+       .success(); 
 
     // Content should remain unchanged
     let content = fs::read(&bin_file).unwrap();

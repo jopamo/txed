@@ -40,6 +40,9 @@ pub enum Error {
 
     #[error("Invalid path: {0:?}")]
     InvalidPath(PathBuf),
+
+    #[error("Transaction failed (partial application): {0}")]
+    TransactionFailure(String),
 }
 
 #[derive(Debug)]

@@ -133,7 +133,7 @@ fn test_glob_absolute_path_extension_mismatch() {
         .arg("*.txt")
         .arg(abs_path.to_str().unwrap())
         .assert()
-        .failure()
+        .success()
         .stdout(predicate::str::contains("glob_exclude"));
 
     assert_eq!(fs::read_to_string(&abs_path).unwrap(), "foo");

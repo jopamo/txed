@@ -11,6 +11,7 @@ mod cli;
 mod engine;
 mod error;
 mod events;
+mod exit_codes;
 mod input;
 mod model;
 mod replacer;
@@ -50,14 +51,28 @@ fn resolve_permissions(args: &DefaultArgs) -> Result<Option<PermissionsMode>> {
     }
 }
 
-fn main() -> Result<()> {
+fn main() {
+    match try_main() {
+        Ok(code) => std::process::exit(code),
+        Err(e) => {
+            if let Some(crate::error::Error::TransactionFailure(_)) = e.downcast_ref::<crate::error::Error>() {
+                eprintln!("Error: {:#}", e);
+                std::process::exit(exit_codes::TRANSACTION_FAILURE);
+            }
+            eprintln!("Error: {:#}", e);
+            std::process::exit(exit_codes::ERROR);
+        }
+    }
+}
+
+fn try_main() -> Result<i32> {
     let cli = Cli::parse();
 
     let (manifest_path, find, replace, files, default_args) = match cli.command {
         Some(Commands::Schema) => {
             let schema = schemars::schema_for!(Pipeline);
             println!("{}", serde_json::to_string_pretty(&schema)?);
-            return Ok(());
+            return Ok(exit_codes::SUCCESS);
         }
         Some(Commands::Apply(args)) => {
             // Manifest is required for apply subcommand
@@ -218,5 +233,5 @@ fn main() -> Result<()> {
         OutputFormat::Summary => if args.quiet { report.print_errors_only() } else { report.print_summary() },
     }
 
-    std::process::exit(report.exit_code());
+    Ok(report.exit_code())
 }

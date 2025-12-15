@@ -36,15 +36,15 @@ What’s left is mostly **structured output stability**, **consistency**, and **
 
 ### 2) Exit code + error taxonomy alignment
 
-* [ ] Standardize exit categories (examples):
+* [x] Standardize exit categories (examples):
 
-  * success
-  * policy violation (require-match/expect/fail-on-change/validate-only failure)
-  * input error (bad args, invalid range, invalid manifest)
-  * filesystem error (permissions, missing file, rename failure)
-  * internal error (should be rare)
-* [ ] Make sure **transaction all** returns the correct exit classification when staging fails vs commit fails
-* [ ] Add tests that assert exit codes for the major policy flags and failure modes
+  * success (0)
+  * policy violation (2)
+  * input error (1)
+  * filesystem error (1)
+  * internal error (3 for transaction failure)
+* [x] Make sure **transaction all** returns the correct exit classification when staging fails vs commit fails
+* [x] Add tests that assert exit codes for the major policy flags and failure modes
 
 ---
 

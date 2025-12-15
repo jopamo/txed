@@ -130,7 +130,7 @@ pub fn execute(mut pipeline: Pipeline, inputs: Vec<InputItem>) -> Result<Report>
     // Commit if no errors and no policy violations
     if report.exit_code() == 0 {
         if let Some(manager) = tm {
-            manager.commit().map_err(|e| Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+            manager.commit().map_err(|e| Error::TransactionFailure(e.to_string()))?;
         }
     }
 
