@@ -180,6 +180,7 @@ fn try_main() -> Result<i32> {
             no_unicode: args.no_unicode,
             limit: args.limit.unwrap_or(0),
             range,
+            expand: false, // CLI currently doesn't expose a flag for expansion, defaulting to safe false
         };
 
         // Resolve permissions

@@ -103,8 +103,43 @@ pub enum Operation {
         /// Only apply replacements in a line range (1-based).
         #[serde(default)]
         range: Option<LineRange>,
+        /// Enable regex capture expansion (e.g. $1, $name).
+        #[serde(default)]
+        expand: bool,
     },
-    // Future operations: Delete, Insert, RegexReplace, etc.
+    /// Delete occurrences of a pattern.
+    Delete {
+        /// Pattern to find (literal string or regex).
+        find: String,
+        /// Whether to treat pattern as literal string (not regex).
+        #[serde(default)]
+        literal: bool,
+        /// Case-insensitive matching.
+        #[serde(default)]
+        ignore_case: bool,
+        /// Smart-case: case-insensitive if pattern is all lowercase.
+        #[serde(default)]
+        smart_case: bool,
+        /// Match only at word boundaries.
+        #[serde(default)]
+        word: bool,
+        /// Enable multi-line mode (^ and $ match line boundaries).
+        #[serde(default)]
+        multiline: bool,
+        /// Make '.' match newlines.
+        #[serde(default)]
+        dot_matches_newline: bool,
+        /// Disable Unicode-aware matching.
+        #[serde(default)]
+        no_unicode: bool,
+        /// Maximum number of replacements per file (0 = unlimited).
+        #[serde(default)]
+        limit: usize,
+        /// Only apply replacements in a line range (1-based).
+        #[serde(default)]
+        range: Option<LineRange>,
+    },
+    // Future operations: Insert, RegexReplace, etc.
 }
 
 /// A complete transformation pipeline.
@@ -174,6 +209,7 @@ impl Pipeline {
                 no_unicode: false,
                 limit: 0,
                 range: None,
+                expand: false,
             }],
             dry_run: false,
             no_write: false,

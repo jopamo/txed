@@ -1,139 +1,59 @@
-# Project TODOs
+#Project TODOs: Release & Roadmap
 
-This tracks what’s left to finish, stabilize, and ship now that the core CLI + engine features are largely in place.
+##🚀 Phase 1: Pre-Release Polish (Docs & Perf)*The code works. Now, prove it performs and explain how to use it.*
 
-## ✅ Status recap
+###1) Performance Benchmarking (Carried Over)* [ ] **Stress Test:** Run against a massive repo (e.g., Linux kernel, chromium) to check memory usage during `transaction: all`.
+* [ ] **Streaming Latency:** Verify `rg-json` input doesn't introduce blocking buffers (ensure output flows as matches are found).
+* [ ] **Quadratic Check:** Verify lines with 10k+ characters or files with 100k+ matches don't stall the engine.
 
-You’ve already implemented the heavy hitters:
+###2) Documentation & Contracts* [ ] **JSON Schema Reference:** Document the "Stable JSON event model" you just finalized.
+* *Must include:* Example success payload, example error payload, enum definitions.
 
-* CLI flags + input modes (stdin paths / files0 / stdin-text / rg-json / files override)
-* matcher semantics (literal + regex), ranges, limit/max-replacements
-* include/exclude globs, path collection + post-filtering
-* safety policies (no-write, require-match, expect, fail-on-change)
-* transactions (file + all), staging/commit behavior
-* filesystem behavior (symlink modes, binary modes, permissions preserve/fixed)
-* output formats (diff/summary/json/agent) and rg-json span targeting
 
-What’s left is mostly **structured output stability**, **consistency**, and **ship readiness**.
-
----
-
-## 🚨 Release-blockers
-
-### 1) Stable JSON event model (the big remaining gap)
-
-**Goal:** “`--format json`” becomes a contract you can version and other tools can rely on.
-
-* [x] Define a **single event schema** (serde-serializable) with:
-
-  * run header: tool version, mode (cli/apply), input mode, transaction mode, policy knobs
-  * per-file events: changed/skipped/error stats + reason enums
-  * policy results: require-match/expect/fail-on-change, validate-only, no-write/dry-run
-  * final summary: totals + exit classification
-* [x] Ensure **all skip/error paths** emit structured events (binary skip, symlink skip, glob exclude, unreadable file, permission failure, etc)
-* [x] Make JSON output ordering deterministic (run_start → file events → run_end)
-* [x] Add `schema_version: "1"` (or similar) so you can evolve it safely later
-
-### 2) Exit code + error taxonomy alignment
-
-* [x] Standardize exit categories (examples):
-
-  * success (0)
-  * policy violation (2)
-  * input error (1)
-  * filesystem error (1)
-  * internal error (3 for transaction failure)
-* [x] Make sure **transaction all** returns the correct exit classification when staging fails vs commit fails
-* [x] Add tests that assert exit codes for the major policy flags and failure modes
+* [ ] **CLI Help Text Audit:** Ensure `--help` output groups flags logically (e.g., separating "Safety Policies" from "Input Formatting").
+* [ ] **Recipe/Cookbook:** Add examples for common patterns:
+* *“Dry run a regex replacement”*
+* *“Pipe ripgrep JSON into tool”*
+* *“Apply a bulk edit via manifest”*
 
 ---
 
-## 🧪 Test completion and hardening
+##📦 Phase 2: Packaging & Distribution*Turn the binary into a release artifact.*
 
-### 3) Expand tests for JSON events
+###3) Build Pipeline (CI)* [ ] **Release Profile:** Ensure `release` builds have LTO (Link Time Optimization) enabled and symbols stripped (if applicable) for size/speed.
+* [ ] **Cross-Compilation:** Verify builds for:
+* Linux (x86_64, aarch64)
+* macOS (Intel, Apple Silicon)
+* Windows (msvc)
 
-* [x] Golden-style tests for `--format json`:
 
-  * stable keys present
-  * per-file arrays contain expected stats
-  * skip reasons match expected enum strings
-  * validate-only includes `"validate_only": true`
-* [x] Tests for “no writes happened” in:
-
-  * `--no-write`
-  * `--stdin-text`
-  * validate-only
-  * transaction all staging failure
-
-### 4) Path + glob matching edge cases
-
-* [x] Confirm and lock down what you match globs against:
-
-  * raw incoming path vs normalized relative-to-cwd
-* [x] Add tests for:
-
-  * `./path` vs `path`
-  * absolute paths
-  * repeated inputs and dedupe ordering (if you dedupe)
-  * glob include then exclude precedence (already planned, now verify via tests)
+* [ ] **Versioning:** Tag the repo with `v0.1.0` (or `v1.0.0`) and ensure the CLI `--version` output matches the git tag.
 
 ---
 
-## 🔧 UX polish that pays off fast
+##🔮 Phase 3: The "Manifest" Evolution (Next Feature Set)*Now that the CLI is safe, turn the tool into a generalized refactoring engine via the Manifest.*
 
-### 5) Output behavior consistency
+###4) Expanded Operation Primitives* [ ] **Schema Expansion:** Update `Operation` enum to support:
+* `replace` (current behavior)
+* `delete` (remove match entirely)
+* `insert_before` / `insert_after`
 
-* [x] Ensure `--quiet` suppresses human output but **never suppresses JSON errors/events**
-* [x] Decide + enforce one contract for mixed streams:
 
-  * human output to stdout and JSON to stderr, or vice versa
-  * make it consistent across all modes (stdin-text, rg-json, apply manifest)
+* [ ] **Regex Capture Groups:** Investigate support for `$1` / `${1}` capture expansion in replacement strings.
+* *Decision:* Gate behind a `--enable-captures` flag for safety?
 
-### 6) Diff correctness and stability
 
-* [x] Confirm diff formatting is stable and deterministic (path headers, newline handling, no trailing noise)
-* [x] Add tests for newline edge cases:
 
-  * files without trailing newline
-  * CRLF input (if you support it) and how it’s preserved
+###5) Manifest Logic upgrades* [ ] **Manifest-level Configuration:** Allow the manifest JSON/YAML to specify:
+* `"transaction_mode": "all"` (Override CLI default)
+* `"glob_include": [...]`
 
----
 
-## ⚙️ Internal cleanup (good “post-v1” but low risk)
-
-### 7) Refactor: one “policy enforcement” chokepoint
-
-* [x] Ensure policies are enforced from exactly the correct lifecycle points:
-
-  * validate-only: after plan, before any stage/write
-  * transaction all: after staging and before commit
-  * transaction file: after per-file apply or at end (depending on policy)
-* [x] Avoid policy logic leaking into reporter and engine separately (single authoritative function)
-
-### 8) Performance sanity checks
-
-* [x] Add a small benchmark or at least stress tests for:
-
-  * large files
-  * many files (transaction all staging)
-  * rg-json streaming inputs
-* [x] Confirm match scanning doesn’t do accidental quadratic work (especially with line/range mapping)
+* [ ] **Precedence Logic:** Implement the logic: *CLI Flags > Manifest Config > Defaults*.
 
 ---
 
-## 🔮 Future / planned (keep, but clearly non-blocking)
+##🧪 Phase 4: Extended QA (The "Real World")*Beyond unit tests.*
 
-### 9) New operations in manifest model
-
-* [ ] Extend `Operation` (tagged serde enums) with:
-
-  * replace / delete / insert / regex_replace
-* [ ] Decide whether capture expansion (`$1`) exists and gate it behind a flag if added
-
-### 10) Manifest schema upgrades
-
-* [ ] Add optional manifest keys:
-
-  * transaction, glob_include/exclude
-* [ ] Define precedence rules (CLI overrides manifest unless a future “respect-manifest” is added)
-
+###6) Dogfooding* [ ] **The "Self-Edit":** Use the tool to run a refactor on its own codebase (e.g., renaming a variable project-wide).
+* [ ] **Fuzzing:** (Optional) Throw random bytes at the `--format json` parser or input streams to ensure no panics occur.

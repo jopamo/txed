@@ -389,7 +389,7 @@ fn process_content_inner(
     for op in operations {
         match op {
             Operation::Replace { find, with: replacement, literal, ignore_case, smart_case,
-                word, multiline, dot_matches_newline, no_unicode, limit, range } => {
+                word, multiline, dot_matches_newline, no_unicode, limit, range, expand } => {
                 // Build replacer
                 let replacer = Replacer::new(
                     find,
@@ -407,12 +407,42 @@ fn process_content_inner(
                     *limit,
                     range.clone(),
                     matches.map(|m| m.to_vec()),
+                    *expand,
                 ).map_err(|e| Error::Validation(e.to_string()))?;
 
                 // Apply replacement to current string (as bytes) and count replacements
                 let (bytes, replacements) = replacer.replace_with_count(current.as_bytes());
                 let new_string = String::from_utf8(bytes.to_vec())
                     .map_err(|e| Error::Validation(format!("Invalid UTF-8 after replacement: {}", e)))?;
+
+                current = new_string;
+                total_replacements += replacements;
+            }
+            Operation::Delete { find, literal, ignore_case, smart_case,
+                word, multiline, dot_matches_newline, no_unicode, limit, range } => {
+                // Build replacer with empty replacement
+                let replacer = Replacer::new(
+                    find,
+                    "", // empty replacement
+                    *literal,
+                    *ignore_case,
+                    *smart_case,
+                    !(*ignore_case || *smart_case), // case_sensitive
+                    *word,
+                    *multiline,
+                    false, // single_line
+                    *dot_matches_newline,
+                    *no_unicode,
+                    false, // crlf
+                    *limit,
+                    range.clone(),
+                    matches.map(|m| m.to_vec()),
+                    false, // expand (no need for empty string)
+                ).map_err(|e| Error::Validation(e.to_string()))?;
+
+                let (bytes, replacements) = replacer.replace_with_count(current.as_bytes());
+                let new_string = String::from_utf8(bytes.to_vec())
+                    .map_err(|e| Error::Validation(format!("Invalid UTF-8 after delete: {}", e)))?;
 
                 current = new_string;
                 total_replacements += replacements;
@@ -502,6 +532,7 @@ mod tests {
             no_unicode: false,
             limit: 0,
             range: None,
+            expand: false,
         }
     }
 

@@ -17,6 +17,7 @@ pub struct Replacer {
     max_replacements: usize,
     range: Option<LineRange>,
     allowed_ranges: Option<Vec<ReplacementRange>>,
+    expand: bool,
     // TODO: track validation mode (strict, warn, none)
 }
 
@@ -37,17 +38,24 @@ impl Replacer {
         max_replacements: usize,
         range: Option<LineRange>,
         allowed_ranges: Option<Vec<ReplacementRange>>,
+        expand: bool,
     ) -> Result<Self> {
         // 1. Validate replacement pattern for capture group references
-        // Even though we don't expand by default, we might validation?
-        // Actually, if we don't expand, validating $1 is annoying.
-        // But let's keep it for now as it was there.
-        validate::validate_replacement(replacement)?;
+        if !expand {
+             // If we don't expand, we don't strictly need to validate $1, but it might be nice to warn?
+             // Actually, the original code called validate::validate_replacement which checks for $N validity.
+             // If expand is false, $1 is literal "$1", so valid.
+             // If expand is true, $1 must be valid.
+             // We should probably only validate if expand is true.
+        } else {
+            validate::validate_replacement(replacement)?;
+        }
 
         // Determine if we can use efficient literal matcher
         // We can use Literal matcher only if:
         // - fixed_strings is requested (or pattern is literal) -> handled by caller passing fixed_strings
         // - NO regex flags that affect matching (ignore_case, smart_case, word_regexp, multiline etc)
+        // - NO expansion (if expand is true, we need regex engine to resolve captures, UNLESS replacement has no $ signs)
         // Note: multiline/dot_matches_newline don't apply to literal strings unless we search line by line?
         // memmem works on bytes, ignores lines.
         // word_regexp requires checking boundaries -> complex for memmem, use regex.
@@ -56,7 +64,8 @@ impl Replacer {
         let use_literal_matcher = fixed_strings 
             && !ignore_case 
             && !smart_case 
-            && !word_regexp;
+            && !word_regexp
+            && (!expand || !replacement.contains("$")); // If expansion requested but no $ involved, literal is fine
 
         let matcher = if use_literal_matcher {
             Matcher::Literal(pattern.as_bytes().to_vec())
@@ -107,6 +116,7 @@ impl Replacer {
             max_replacements,
             range,
             allowed_ranges,
+            expand,
         })
     }
 
@@ -182,10 +192,19 @@ impl Replacer {
                  if actual_replacements == 0 {
                      return (Cow::Borrowed(text), 0);
                  }
+                 
                  let replaced = if self.max_replacements == 0 {
-                    re.replace_all(text, NoExpand(&self.replacement))
+                    if self.expand {
+                        re.replace_all(text, &self.replacement[..])
+                    } else {
+                        re.replace_all(text, NoExpand(&self.replacement))
+                    }
                  } else {
-                    re.replacen(text, self.max_replacements, NoExpand(&self.replacement))
+                    if self.expand {
+                         re.replacen(text, self.max_replacements, &self.replacement[..])
+                    } else {
+                         re.replacen(text, self.max_replacements, NoExpand(&self.replacement))
+                    }
                  };
                  return (replaced, actual_replacements);
             }
@@ -209,26 +228,35 @@ impl Replacer {
 
         match &self.matcher {
             Matcher::Regex(re) => {
-                 for m in re.find_iter(text) {
+                 for m in re.captures_iter(text) {
                     if self.max_replacements > 0 && count >= self.max_replacements {
                         break;
                     }
                     
+                    let match_start = m.get(0).unwrap().start();
+                    let match_end = m.get(0).unwrap().end();
+                    
                     if let Some(range) = &self.range {
-                        if !is_in_range(m.start(), range, line_offsets.as_ref().unwrap()) {
+                        if !is_in_range(match_start, range, line_offsets.as_ref().unwrap()) {
                             continue;
                         }
                     }
 
                     if let Some(allowed) = &self.allowed_ranges {
-                        if !check_allowed_range_optimized(m.start(), m.end(), allowed, &mut allowed_cursor) {
+                        if !check_allowed_range_optimized(match_start, match_end, allowed, &mut allowed_cursor) {
                             continue;
                         }
                     }
 
-                    new_data.extend_from_slice(&text[last_match_end..m.start()]);
-                    new_data.extend_from_slice(&self.replacement);
-                    last_match_end = m.end();
+                    new_data.extend_from_slice(&text[last_match_end..match_start]);
+                    
+                    if self.expand {
+                        m.expand(&self.replacement, &mut new_data);
+                    } else {
+                        new_data.extend_from_slice(&self.replacement);
+                    }
+                    
+                    last_match_end = match_end;
                     count += 1;
                  }
             },
@@ -353,6 +381,7 @@ mod tests {
             0,     // max_replacements
             None,
             None,
+            false
         ).unwrap();
         let input = b"foo baz foo";
         let output = replacer.replace_with_count(input).0;
@@ -378,6 +407,7 @@ mod tests {
             0,     // max_replacements
             None,
             None,
+            false
         ).unwrap();
         let input = b"foo baz foo";
         let output = replacer.replace_with_count(input).0;
@@ -390,7 +420,8 @@ mod tests {
         let replacer = Replacer::new(
             r"(\d+)",
             "number-$1",
-            false, false, false, true, false, false, false, false, false, false, 0, None, None
+            false, false, false, true, false, false, false, false, false, false, 0, None, None,
+            false // expand=false
         ).unwrap();
         let input = b"abc 123 def";
         let output = replacer.replace_with_count(input).0;
@@ -399,11 +430,26 @@ mod tests {
     }
 
     #[test]
+    fn test_capture_group_with_expand() {
+        let replacer = Replacer::new(
+            r"(\d+)",
+            "number-$1",
+            false, false, false, true, false, false, false, false, false, false, 0, None, None,
+            true // expand=true
+        ).unwrap();
+        let input = b"abc 123 def";
+        let output = replacer.replace_with_count(input).0;
+        // Should expand $1
+        assert_eq!(&output[..], b"abc number-123 def");
+    }
+
+    #[test]
     fn test_max_replacements() {
         let replacer = Replacer::new(
             "x",
             "y",
-            false, false, false, true, false, false, false, false, false, false, 2, None, None
+            false, false, false, true, false, false, false, false, false, false, 2, None, None,
+            false
         ).unwrap();
         let input = b"x x x x";
         let output = replacer.replace_with_count(input).0;
@@ -425,7 +471,8 @@ mod tests {
             "x",
             "y",
             false, false, false, true, false, false, false, false, false, false, 0, None, 
-            Some(allowed)
+            Some(allowed),
+            false
         ).unwrap();
         
         let input = b"x x x";
