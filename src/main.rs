@@ -135,7 +135,7 @@ fn main() -> Result<()> {
         let op = Operation::Replace {
             find,
             with: replace,
-            literal: args.fixed_strings,
+            literal: !args.regex,
             ignore_case: args.ignore_case,
             smart_case: args.smart_case,
             word: args.word_regexp,
