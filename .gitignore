@@ -9,3 +9,6 @@ Cargo.lock
 .DS_Store
 GE*.md
 CL*.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md

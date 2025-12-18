@@ -1,4 +1,4 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use std::path::Path;
 use tempfile::TempDir;
@@ -42,7 +42,7 @@ fn test_dogfood_self_refactor() {
 
     // Perform a project-wide rename: "Result" -> "SdResult"
     // We use word boundaries to avoid replacing "FileResult" -> "FileSdResult"
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("Result")
        .arg("SdResult")
        .arg("--files0")

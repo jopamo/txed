@@ -1,13 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use serde_json::Value;
 use std::fs;
-#[cfg(unix)]
-use std::os::unix::fs::symlink;
-#[cfg(windows)]
-use std::os::windows::fs::symlink_file as symlink;
 
 fn run_sd2_json(args: &[&str]) -> Vec<Value> {
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd.args(args).arg("--format=json").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     
@@ -120,7 +116,7 @@ fn test_json_no_write() {
 #[test]
 fn test_json_stdin_text() {
     // For stdin, we need to use Command builder differently than run_sd2_json helper
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd
         .arg("hello")
         .arg("goodbye")
@@ -155,20 +151,20 @@ fn test_json_transaction_staging_failure() {
     fs::write(&file_path, "hello world").unwrap();
     
     // Make subdir read-only to prevent creating temp file inside it
-    let mut perms = fs::metadata(&subdir).unwrap().permissions();
+    let original_perms = fs::metadata(&subdir).unwrap().permissions();
+    let mut perms = original_perms.clone();
     perms.set_readonly(true);
     fs::set_permissions(&subdir, perms).unwrap();
     
     // Use transaction all
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap(), "--transaction=all"];
     
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
-    let output = cmd.args(&args).arg("--format=json").output().unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
+    let output_result = cmd.args(&args).arg("--format=json").output();
     
     // Cleanup: restore permissions so tempdir can be deleted
-    let mut p = fs::metadata(&subdir).unwrap().permissions();
-    p.set_readonly(false);
-    fs::set_permissions(&subdir, p).unwrap();
+    fs::set_permissions(&subdir, original_perms).unwrap();
+    let output = output_result.unwrap();
     
     let stdout = String::from_utf8(output.stdout).unwrap();
     let events: Vec<Value> = stdout.lines()

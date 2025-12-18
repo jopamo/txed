@@ -1,4 +1,4 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use tempfile::TempDir;
 
@@ -27,7 +27,7 @@ fn test_manifest_transaction_override() {
     // To verify, we can inspect JSON output if it exposes transaction mode.
     // The event stream "run_start" event should contain "transaction_mode".
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap())
@@ -66,7 +66,7 @@ fn test_manifest_transaction_override() {
     assert_eq!(run_start["transaction_mode"], "file");
 
     // Run WITH CLI override "--transaction all"
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap())

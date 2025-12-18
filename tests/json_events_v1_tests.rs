@@ -1,9 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use serde_json::Value;
 use std::fs;
 
 fn run_sd2_json(args: &[&str]) -> Vec<Value> {
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd.args(args).arg("--format=json").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     
@@ -49,7 +49,7 @@ fn test_json_v1_fields_run_end_committed_dry_run() {
 
 #[test]
 fn test_json_v1_fields_file_is_virtual() {
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     let output = cmd
         .arg("hello")
         .arg("goodbye")

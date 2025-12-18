@@ -1,5 +1,4 @@
-use assert_cmd::Command;
-use predicates::prelude::*;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use std::process::Command as StdCommand;
 use tempfile::tempdir;
@@ -23,7 +22,7 @@ fn test_rg_l_integration() {
     assert!(rg_output.status.success(), "rg failed");
 
     // 3. Run sd2 using the output from rg
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("unwrap()")
        .arg("expect(\"safe\")")
        .write_stdin(rg_output.stdout)
@@ -93,7 +92,7 @@ fn main() {
     // It will find it and replace it.
     // It will NOT replace the "unwrap" on the z line because rg didn't report that line.
     
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("--rg-json")
        .arg("unwrap")
        .arg("expect")
@@ -127,7 +126,7 @@ fn test_rg_json_messy_utf8() {
         .expect("failed to execute rg");
 
     // 3. Run sd2
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("--rg-json")
        .arg("unwrap")
        .arg("expect")
@@ -164,7 +163,7 @@ fn test_real_world_engine_rs() {
 
     assert!(rg_output.status.success());
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("Pipeline")
        .arg("PipeLine")
        .write_stdin(rg_output.stdout)
@@ -187,7 +186,7 @@ fn test_real_world_engine_rs() {
 
     assert!(rg_json_output.status.success());
 
-    let mut cmd2 = Command::cargo_bin("sd2").unwrap();
+    let mut cmd2 = cargo_bin_cmd!("sd2");
     cmd2.arg("--rg-json")
        .arg("InputItem")
        .arg("InItem")

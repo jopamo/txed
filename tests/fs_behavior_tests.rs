@@ -1,7 +1,7 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
+use predicates::prelude::PredicateBooleanExt;
 use std::fs;
 use tempfile::tempdir;
-use predicates::prelude::*;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 
@@ -15,7 +15,7 @@ fn test_symlinks_follow_default() {
     fs::write(&target, "foo").unwrap();
     symlink(&target, &link).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg(link.to_str().unwrap()) // Pass the link
@@ -36,7 +36,7 @@ fn test_symlinks_skip() {
     fs::write(&target, "foo").unwrap();
     symlink(&target, &link).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--symlinks")
@@ -63,7 +63,7 @@ fn test_symlinks_skip_with_other_files() {
     fs::write(&regular, "foo").unwrap();
     symlink(&target, &link).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--symlinks")
@@ -89,7 +89,7 @@ fn test_symlinks_error() {
     fs::write(&target, "foo").unwrap();
     symlink(&target, &link).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--symlinks")
@@ -107,7 +107,7 @@ fn test_binary_skip_default() {
     // Create a file with a null byte
     fs::write(&bin_file, b"foo\0bar").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg(bin_file.to_str().unwrap())
@@ -127,7 +127,7 @@ fn test_binary_error() {
     
     fs::write(&bin_file, b"foo\0bar").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--binary")
@@ -148,7 +148,7 @@ fn test_binary_skip_with_other_files() {
     fs::write(&bin_file, b"foo\0bar").unwrap();
     fs::write(&txt_file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg(bin_file.to_str().unwrap())

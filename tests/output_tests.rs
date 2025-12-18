@@ -1,7 +1,6 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use tempfile::tempdir;
-use predicates::prelude::*;
 
 #[test]
 fn test_quiet_suppresses_success() {
@@ -9,7 +8,7 @@ fn test_quiet_suppresses_success() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")
@@ -26,7 +25,7 @@ fn test_quiet_prints_errors() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")
@@ -46,7 +45,7 @@ fn test_quiet_json_prints_json() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")
@@ -64,7 +63,7 @@ fn test_quiet_json_captures_errors_in_json_and_silences_stderr() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--quiet")

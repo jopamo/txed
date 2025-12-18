@@ -1,4 +1,9 @@
-# sd2
+# HACKING
+
+Developer onboarding for `sd2`.
+
+* For end-user CLI usage, see `README.md`.
+* For internal architecture and module layout, see `DESIGN.md`.
 
 ## Project Overview
 
@@ -12,27 +17,15 @@
 *   **Structured I/O:** Supports JSON manifests for defining operations and JSON output for reporting.
 *   **Pipeline-First:** Designed to work effectively in Unix pipelines.
 
-## Architecture & Codebase
+## Architecture
 
-*   **Language:** Rust (Edition 2024)
-*   **Entry Point:** `src/main.rs` - Handles CLI parsing (via `clap`) and dispatches either the default command (FIND REPLACE) or specific subcommands (`schema`, `apply`).
-*   **Core Logic:**
-    *   `src/engine.rs`: Orchestrates the execution of the replacement pipeline.
-    *   `src/replacer/mod.rs`: Encapsulates the regex replacement logic using the `regex` crate.
-    *   `src/model.rs`: Defines the data structures for the Pipeline and Operations (serialized via `serde`).
-    *   `src/validate.rs` (under `replacer`): Validates replacement strings and capture groups.
-*   **Dependencies:**
-    *   `clap`: CLI argument parsing.
-    *   `regex`: The regex engine.
-    *   `serde`/`serde_json`: JSON serialization/deserialization for manifests and reports.
-    *   `schemars`: JSON Schema generation.
-    *   `tempfile`: Managing atomic writes.
-    *   `ignore` (optional): For directory walking (feature gated).
+`sd2`'s internal architecture, module map, and data-flow notes live in `DESIGN.md`.
 
 ## Building and Running
 
 ### Prerequisites
 *   Rust toolchain (v1.86.0+)
+*   `rg` (ripgrep) is required for some integration tests (`tests/ripgrep_workflow.rs` currently invokes `/usr/bin/rg`).
 
 ### Commands
 
@@ -49,6 +42,16 @@
 *   **Test:**
     ```bash
     cargo test
+    ```
+
+*   **Format:**
+    ```bash
+    cargo fmt --all
+    ```
+
+*   **Lint:**
+    ```bash
+    cargo clippy --all-targets --all-features -- -D warnings
     ```
 
 *   **Install (Local):**
@@ -96,3 +99,10 @@
     *   Unit tests are co-located in source files (e.g., `src/replacer/mod.rs`).
     *   Integration tests likely exist (implied by `assert_cmd` in dev-dependencies) or should be added to `tests/`.
 *   **Agent Interaction:** When adding features, consider how an AI agent would invoke them. Ensure schemas are updated (`model.rs`) and CLI flags have corresponding JSON manifest fields.
+
+## Contribution Flow
+
+1. Create a focused change (small PRs are preferred).
+2. Add/update tests when behavior changes (`cargo test`).
+3. Run formatting and linting (`cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings`).
+4. Submit a PR with a clear description, including any user-facing CLI or JSON schema changes.

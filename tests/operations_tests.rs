@@ -1,4 +1,4 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use tempfile::TempDir;
 
@@ -20,7 +20,7 @@ fn test_operation_delete() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());
@@ -51,7 +51,7 @@ fn test_operation_replace_expand() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());
@@ -81,7 +81,7 @@ fn test_operation_delete_regex() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());

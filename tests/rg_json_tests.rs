@@ -1,6 +1,5 @@
 use std::io::Write;
-use assert_cmd::Command;
-use predicates::prelude::*;
+use assert_cmd::cargo::cargo_bin_cmd;
 use tempfile::NamedTempFile;
 
 #[test]
@@ -10,7 +9,9 @@ fn rg_json_span_targeting() {
     //    foo at line 2 (offset 4..7)
     //    foo at line 3 (offset 8..11)
     let mut file = NamedTempFile::new().unwrap();
-    write!(file, "foo\nfoo\nfoo\n").unwrap();
+    writeln!(file, "foo").unwrap();
+    writeln!(file, "foo").unwrap();
+    writeln!(file, "foo").unwrap();
     let path = file.path().to_str().unwrap().to_string();
 
     // 2. Create rg JSON output that only targets the MIDDLE "foo" (line 2)
@@ -23,7 +24,7 @@ fn rg_json_span_targeting() {
     );
 
     // 3. Run sd2 with --rg-json, replacing "foo" with "bar"
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--rg-json")
@@ -44,7 +45,7 @@ fn rg_json_multiple_submatches() {
     // 1. File with multiple matches on one line
     //    "foo foo"
     let mut file = NamedTempFile::new().unwrap();
-    write!(file, "foo foo\n").unwrap();
+    writeln!(file, "foo foo").unwrap();
     let path = file.path().to_str().unwrap().to_string();
 
     // 2. Rg JSON targeting only the SECOND "foo"
@@ -58,7 +59,7 @@ fn rg_json_multiple_submatches() {
         path.replace("\\", "\\\\")
     );
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--rg-json")

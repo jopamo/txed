@@ -1,4 +1,4 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use tempfile::TempDir;
@@ -21,7 +21,7 @@ fn test_large_file_performance() {
         writer.flush().unwrap();
     }
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("world")
         .arg("universe")
         .arg(file_path.to_str().unwrap());
@@ -63,7 +63,7 @@ fn test_many_files_transaction_all() {
         input_data.push(0); // NUL separator
     }
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("bar")
         .arg("qux")
         .arg("--transaction=all") // Test the staging overhead
@@ -134,7 +134,7 @@ fn test_rg_json_streaming() {
         offset += line_text.len();
     }
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("world") // FIND is ignored in rg-json mode usually, or strictly used for replacement?
                      // Wait, if using rg-json, we are targeting specific spans.
                      // Does sd2 require FIND/REPLACE args in rg-json mode?

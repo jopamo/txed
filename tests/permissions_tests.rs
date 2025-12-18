@@ -1,7 +1,6 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use tempfile::tempdir;
-use predicates::prelude::*;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
@@ -16,7 +15,7 @@ fn test_permissions_preserve_default() {
     let p = fs::Permissions::from_mode(0o755);
     fs::set_permissions(&file, p).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg(file.to_str().unwrap())
@@ -38,7 +37,7 @@ fn test_permissions_fixed() {
     let p = fs::Permissions::from_mode(0o644);
     fs::set_permissions(&file, p).unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--permissions")
@@ -59,7 +58,7 @@ fn test_permissions_fixed_missing_mode_fails() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
        .arg("bar")
        .arg("--permissions")

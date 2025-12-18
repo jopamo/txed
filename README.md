@@ -14,6 +14,22 @@ It follows the Unix philosophy strictly.
 
 ---
 
+## Features
+
+*   **Atomic edits by default:** Transactional writes across one file or many (`--transaction all|file`).
+*   **Explicit inputs:** Edits only the files you pass (args/stdin); no implicit directory traversal.
+*   **Multiple input modes:** Positional files, newline/NUL-delimited stdin paths, stdin text, or `rg --json` spans.
+*   **Safe previews:** `--dry-run` diffs, `--no-write`, and validation-only runs.
+*   **Structured automation:** JSON event stream (`--format json`) and JSON Schema (`sd2 schema`) for agent tooling.
+*   **Manifest apply mode:** Multi-file pipelines via `sd2 apply --manifest …`.
+
+## Documentation
+
+*   **Developer guide:** `HACKING.md`
+*   **Architecture/design notes:** `DESIGN.md`
+*   **JSON output contract:** `docs/JSON_EVENTS.md`
+*   **MCP integration example:** `docs/MCP_INTEGRATION.md`
+
 ## ⚡ Quick Start
 
 ### Basic Replacement
@@ -380,10 +396,16 @@ Literal replacement on a large wordlist, streamed to stdout
 ## 📦 Installation
 
 ```bash
+# From a local checkout
 cargo install --path .
+
+# Or, install directly from git (replace with your repo URL)
+cargo install --git <REPO_URL>
 ```
 
-(crates.io release pending)
+Requires Rust 1.86+.
+
+Prebuilt binaries and crates.io publishing are not set up yet.
 
 ---
 

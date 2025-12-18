@@ -1,4 +1,4 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use predicates::prelude::*;
 use std::fs;
 
@@ -13,7 +13,7 @@ fn test_default_output_format_non_tty() {
     let file_path = dir.path().join("test.txt");
     fs::write(&file_path, "hello world").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("hello")
         .arg("goodbye")
         .arg(&file_path)
@@ -35,7 +35,7 @@ fn test_explicit_format_summary() {
     let file_path = dir.path().join("test.txt");
     fs::write(&file_path, "foo bar").unwrap();
 
-    let mut cmd = Command::cargo_bin("sd2").unwrap();
+    let mut cmd = cargo_bin_cmd!("sd2");
     cmd.arg("foo")
         .arg("baz")
         .arg(&file_path)

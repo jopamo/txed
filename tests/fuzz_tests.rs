@@ -1,11 +1,11 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use proptest::prelude::*;
 
 proptest! {
     // Fuzz the rg-json input parser
     #[test]
     fn fuzz_rg_json_input(s in r"\PC*") {
-        let mut cmd = Command::cargo_bin("sd2").unwrap();
+        let mut cmd = cargo_bin_cmd!("sd2");
         // invalid inputs should fail gracefully (exit code 1) or succeed with 0 replacements
         // but never panic or exit with a weird signal.
         let assert = cmd
@@ -31,7 +31,7 @@ proptest! {
     // Fuzz stdin-text content
     #[test]
     fn fuzz_stdin_text(s in r"\PC*") {
-        let mut cmd = Command::cargo_bin("sd2").unwrap();
+        let mut cmd = cargo_bin_cmd!("sd2");
         let assert = cmd
             .arg("foo")
             .arg("bar")
