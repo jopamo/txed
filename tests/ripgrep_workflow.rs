@@ -11,8 +11,8 @@ fn test_rg_l_integration() {
     fs::write(&file_path, "fn main() { unwrap(); }").unwrap();
 
     // 2. Run rg -l to get the file list
-    // We assume /usr/bin/rg is available as per prompt
-    let rg_output = StdCommand::new("/usr/bin/rg")
+    // We assume rg is available in PATH
+    let rg_output = StdCommand::new("rg")
         .arg("-l")
         .arg("unwrap")
         .current_dir(dir.path())
@@ -71,7 +71,7 @@ fn main() {
     // So if we have "unwrap" twice, and rg only reports one (e.g. because we grepped for `let x.*unwrap`),
     // txed should only replace that one.
 
-    let rg_output = StdCommand::new("/usr/bin/rg")
+    let rg_output = StdCommand::new("rg")
         .arg("--json")
         .arg("let x.*unwrap") // Only matches the first line
         .current_dir(dir.path())
@@ -118,7 +118,7 @@ fn test_rg_json_messy_utf8() {
     fs::write(&file_path, content).unwrap();
 
     // 2. Run rg --json
-    let rg_output = StdCommand::new("/usr/bin/rg")
+    let rg_output = StdCommand::new("rg")
         .arg("--json")
         .arg("unwrap")
         .current_dir(dir.path())
@@ -154,7 +154,7 @@ fn test_real_world_engine_rs() {
     fs::copy(engine_src, &file_path).unwrap();
 
     // 2. rg -l workflow: Replace "Pipeline" with "PipeLine"
-    let rg_output = StdCommand::new("/usr/bin/rg")
+    let rg_output = StdCommand::new("rg")
         .arg("-l")
         .arg("Pipeline")
         .current_dir(dir.path())
@@ -177,7 +177,7 @@ fn test_real_world_engine_rs() {
 
     // 3. rg --json workflow: Replace "InputItem" with "InItem"
     // Targeted replacement
-    let rg_json_output = StdCommand::new("/usr/bin/rg")
+    let rg_json_output = StdCommand::new("rg")
         .arg("--json")
         .arg("InputItem")
         .current_dir(dir.path())

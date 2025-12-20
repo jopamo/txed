@@ -61,7 +61,7 @@ This file intentionally avoids duplicating that material.
 * `rg` (ripgrep)
 
   * Required for some integration tests
-  * `tests/ripgrep_workflow.rs` currently invokes `/usr/bin/rg`
+  * `tests/ripgrep_workflow.rs` currently invokes `rg` (must be in PATH)
 
 ---
 
