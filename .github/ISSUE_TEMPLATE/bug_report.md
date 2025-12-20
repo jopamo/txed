@@ -1,21 +1,21 @@
 ---
 name: Bug report
-about: An issue with stedi or any of its components
+about: An issue with txed or any of its components
 title: ''
 labels: ''
 assignees: ''
 ---
 
 
-#### What version of stedi are you using?
+#### What version of txed are you using?
 
-Replace this text with the output of `stedi --version`.
+Replace this text with the output of `txed --version`.
 
-#### How did you install stedi?
+#### How did you install txed?
 
-If you installed stedi via a package manager and are getting strange errors, please try building from source using `cargo install --path .` or check the latest releases on GitHub.
+If you installed txed via a package manager and are getting strange errors, please try building from source using `cargo install --path .` or check the latest releases on GitHub.
 
-#### What operating system are you using stedi on?
+#### What operating system are you using txed on?
 
 Replace this text with your operating system and version.
 
@@ -44,4 +44,4 @@ here
 
 #### What is the expected behavior?
 
-What do you think stedi should have done?
+What do you think txed should have done?

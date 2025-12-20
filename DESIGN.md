@@ -1,6 +1,6 @@
 # DESIGN
 
-This document describes how `stedi` works internally.
+This document describes how `txed` works internally.
 
 * End-user CLI semantics: `README.md`
 * Contributor workflow and norms: `HACKING.md`
@@ -11,7 +11,7 @@ This file is **architectural truth**. If code diverges from it, the code is wron
 
 ## High-Level Architecture
 
-At a high level, `stedi`:
+At a high level, `txed`:
 
 1. Parses CLI arguments or a manifest into a unified execution configuration (`Pipeline`)
 2. Resolves a single, explicit input mode
@@ -89,7 +89,7 @@ These types are used uniformly by:
 
 * JSON Schema generation
 
-* `stedi schema`
+* `txed schema`
   Emits a JSON Schema for the `Pipeline` type via `schemars`.
 
 ---
@@ -220,7 +220,7 @@ Files are never modified in place.
 
 ## Data Flow
 
-### CLI Replace Mode (`stedi FIND REPLACE …`)
+### CLI Replace Mode (`txed FIND REPLACE …`)
 
 1. `main.rs` parses CLI arguments
 2. Input mode is resolved
@@ -238,7 +238,7 @@ Files are never modified in place.
 
 ---
 
-### Manifest Apply Mode (`stedi apply --manifest …`)
+### Manifest Apply Mode (`txed apply --manifest …`)
 
 * The same engine and data flow
 * `Pipeline` is deserialized from JSON
@@ -254,7 +254,7 @@ CLI flags > manifest values > defaults
 
 ### `rg --json` Span Mode (`--rg-json`)
 
-In this mode, `stedi` does **not** search.
+In this mode, `txed` does **not** search.
 
 * `rg --json` determines exact match spans
 * `src/rgjson.rs` parses and records spans

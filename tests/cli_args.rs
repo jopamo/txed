@@ -5,7 +5,7 @@ use tempfile::tempdir;
 
 #[test]
 fn test_validate_only_no_files() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("--validate-only")
         .arg("foo")
         .arg("bar")
@@ -20,7 +20,7 @@ fn test_validate_only_with_file_dry_run() {
     let file_path = dir.path().join("test.txt");
     fs::write(&file_path, "hello foo world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("--validate-only")
         .arg("--format=diff")
         .arg("foo")
@@ -42,7 +42,7 @@ fn test_stdin_paths() {
     let file_path = dir.path().join("test_stdin.txt");
     fs::write(&file_path, "hello foo world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("foo")
         .arg("bar")
         .arg("--stdin-paths")
@@ -58,7 +58,7 @@ fn test_stdin_paths() {
 
 #[test]
 fn test_stdin_text() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("foo")
         .arg("bar")
         .arg("--stdin-text")
@@ -74,7 +74,7 @@ fn test_files0() {
     let file_path = dir.path().join("test_files0.txt");
     fs::write(&file_path, "hello foo world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     // \0 delimiter
     let input = format!("{}\0", file_path.to_str().unwrap());
 
@@ -111,7 +111,7 @@ fn test_rg_json() {
     );
     let json_input = format!("{begin}\n{match_event}\n{end}\n");
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("foo")
         .arg("bar")
         .arg("--rg-json")
@@ -131,7 +131,7 @@ fn test_limit_alias() {
     let file_path = dir.path().join("test_limit.txt");
     fs::write(&file_path, "foo foo foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("foo")
         .arg("bar")
         .arg("--limit")

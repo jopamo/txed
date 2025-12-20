@@ -9,21 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.release.outputs.upload_url }}
-      stedi_version: ${{ env.STEDI_VERSION }}
+      txed_version: ${{ env.TXED_VERSION }}
     steps:
       - name: Get the release version from the tag
         shell: bash
         run: |
-          echo "STEDI_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.STEDI_VERSION }}"
+          echo "TXED_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.TXED_VERSION }}"
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.STEDI_VERSION }}
-          release_name: ${{ env.STEDI_VERSION }}
+          tag_name: ${{ env.TXED_VERSION }}
+          release_name: ${{ env.TXED_VERSION }}
 
   build-release:
     name: build-release
@@ -75,17 +75,17 @@ jobs:
     - name: Build archive
       shell: bash
       run: |
-        staging="stedi-${{ needs.create-release.outputs.stedi_version }}-${{ matrix.target }}"
+        staging="txed-${{ needs.create-release.outputs.txed_version }}-${{ matrix.target }}"
         mkdir -p "$staging"
 
         cp README.md "$staging/"
 
         if [ "${{ matrix.os }}" = "windows-2022" ]; then
-          cp "target/${{ matrix.target }}/release/stedi.exe" "$staging/"
+          cp "target/${{ matrix.target }}/release/txed.exe" "$staging/"
           7z a "$staging.zip" "$staging"
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
         else
-          cp "target/${{ matrix.target }}/release/stedi" "$staging/"
+          cp "target/${{ matrix.target }}/release/txed" "$staging/"
           tar czf "$staging.tar.gz" "$staging"
           echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
         fi

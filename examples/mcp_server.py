@@ -13,16 +13,16 @@ except ImportError:
     print("Error: 'mcp' package not found. Install it with: uv add 'mcp[cli]'", file=sys.stderr)
     sys.exit(1)
 
-mcp = FastMCP("sd2-tools")
+mcp = FastMCP("txed-tools")
 
-SD2_BINARY = "sd2"  # ensure this is in PATH or set to an absolute path
+TXED_BINARY = "txed"  # ensure this is in PATH or set to an absolute path
 
 
-def _resolve_sd2() -> Optional[str]:
+def _resolve_txed() -> Optional[str]:
     # Allows either absolute path or PATH lookup
-    if os.path.isabs(SD2_BINARY):
-        return SD2_BINARY if os.path.exists(SD2_BINARY) else None
-    return shutil.which(SD2_BINARY)
+    if os.path.isabs(TXED_BINARY):
+        return TXED_BINARY if os.path.exists(TXED_BINARY) else None
+    return shutil.which(TXED_BINARY)
 
 
 def _run_process(argv: List[str], input_data: Optional[str]) -> Tuple[int, str, str]:
@@ -37,21 +37,21 @@ def _run_process(argv: List[str], input_data: Optional[str]) -> Tuple[int, str, 
     return proc.returncode, stdout, stderr
 
 
-def run_sd2_command(args: List[str], input_data: Optional[str] = None) -> str:
+def run_txed_command(args: List[str], input_data: Optional[str] = None) -> str:
     """
-    Run sd2 and summarize its NDJSON output for an LLM.
+    Run txed and summarize its NDJSON output for an LLM.
     Always forces JSON output and returns a human-readable summary.
     """
-    sd2_path = _resolve_sd2()
-    if not sd2_path:
+    txed_path = _resolve_txed()
+    if not txed_path:
         return (
-            f"Error: '{SD2_BINARY}' not found.\n"
-            "Install sd2 or set SD2_BINARY to an absolute path."
+            f"Error: '{TXED_BINARY}' not found.\n"
+            "Install txed or set TXED_BINARY to an absolute path."
         )
 
     # Force JSON format for reliable parsing
     # Include '--' to prevent patterns starting with '-' from being parsed as flags
-    argv = [sd2_path] + args + ["--format=json"]
+    argv = [txed_path] + args + ["--format=json"]
 
     rc, stdout, stderr = _run_process(argv, input_data=input_data)
 
@@ -108,9 +108,9 @@ def run_sd2_command(args: List[str], input_data: Optional[str] = None) -> str:
         out.append("\n### Errors")
         out.extend(f"- {e}" for e in errors)
 
-    # If sd2 exited nonzero but didn't emit a structured error, surface that
+    # If txed exited nonzero but didn't emit a structured error, surface that
     if rc != 0 and not errors:
-        out.append(f"\n### Exit status\n- sd2 exited with code {rc}")
+        out.append(f"\n### Exit status\n- txed exited with code {rc}")
 
     if non_json_lines:
         # This should not happen under --format=json, but if it does,
@@ -128,7 +128,7 @@ def run_sd2_command(args: List[str], input_data: Optional[str] = None) -> str:
 
 
 @mcp.tool()
-def sd2_replace(
+def txed_replace(
     find: str,
     replace: str,
     files: List[str],
@@ -138,10 +138,10 @@ def sd2_replace(
     dry_run: bool = False,
 ) -> str:
     """
-    Perform a search and replace on explicit files via sd2.
+    Perform a search and replace on explicit files via txed.
     """
     if fixed_strings and regex:
-        # If sd2 supports both, you can drop this, but most tools treat these as mutually exclusive
+        # If txed supports both, you can drop this, but most tools treat these as mutually exclusive
         return "Error: 'fixed_strings' and 'regex' cannot both be true"
 
     args = ["--", find, replace] + files
@@ -157,11 +157,11 @@ def sd2_replace(
     if dry_run:
         args.append("--dry-run")
 
-    return run_sd2_command(args)
+    return run_txed_command(args)
 
 
 @mcp.tool()
-def sd2_apply(manifest: Dict[str, Any], dry_run: bool = False) -> str:
+def txed_apply(manifest: Dict[str, Any], dry_run: bool = False) -> str:
     """
     Apply a manifest describing multi-file operations.
     """
@@ -175,7 +175,7 @@ def sd2_apply(manifest: Dict[str, Any], dry_run: bool = False) -> str:
         if dry_run:
             args.append("--dry-run")
 
-        return run_sd2_command(args)
+        return run_txed_command(args)
     finally:
         if tmp_path:
             try:

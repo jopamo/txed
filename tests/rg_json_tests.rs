@@ -23,8 +23,8 @@ fn rg_json_span_targeting() {
         path.replace("\\", "\\\\") // Handle windows paths if needed, though linux is assumed here
     );
 
-    // 3. Run stedi with --rg-json, replacing "foo" with "bar"
-    let mut cmd = cargo_bin_cmd!("stedi");
+    // 3. Run txed with --rg-json, replacing "foo" with "bar"
+    let mut cmd = cargo_bin_cmd!("txed");
     cmd.arg("foo")
         .arg("bar")
         .arg("--rg-json")
@@ -59,7 +59,7 @@ fn rg_json_multiple_submatches() {
         path.replace("\\", "\\\\")
     );
 
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     cmd.arg("foo")
         .arg("bar")
         .arg("--rg-json")

@@ -3,7 +3,7 @@ use predicates::prelude::*;
 
 #[test]
 fn test_stdin_text_json_output() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("foo")
         .arg("bar")
         .arg("--stdin-text")
@@ -18,7 +18,7 @@ fn test_stdin_text_json_output() {
 
 #[test]
 fn test_stdin_text_json_no_change() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg("zzz")
         .arg("bar")
         .arg("--stdin-text")
@@ -28,8 +28,8 @@ fn test_stdin_text_json_no_change() {
         .success()
         .stdout(predicate::str::contains(
             r#""generated_content":"hello foo world""#,
-        )); // Returns original if no change? 
-    // Documentation says "generated_content: The full transformed content."
-    // If modified is false, it should still return the content for stdin-text mode?
-    // Let's check src/engine.rs logic.
+        )); // Returns original if no change?
+            // Documentation says "generated_content: The full transformed content."
+            // If modified is false, it should still return the content for stdin-text mode?
+            // Let's check src/engine.rs logic.
 }

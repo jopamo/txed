@@ -21,7 +21,7 @@ fn test_large_file_performance() {
         writer.flush().unwrap();
     }
 
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     cmd.arg("world")
         .arg("universe")
         .arg(file_path.to_str().unwrap());
@@ -63,7 +63,7 @@ fn test_many_files_transaction_all() {
         input_data.push(0); // NUL separator
     }
 
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     cmd.arg("bar")
         .arg("qux")
         .arg("--transaction=all") // Test the staging overhead
@@ -105,8 +105,8 @@ fn test_rg_json_streaming() {
     // { "type": "match", "data": { "path": { "text": "..." }, "lines": { "text": "..." }, "line_number": ..., "absolute_offset": ..., "submatches": [...] } }
     // { "type": "end", "data": { "path": { "text": "..." } } }
 
-    // We only need "match" events for stedi to work?
-    // stedi's stream_rg_json_ndjson uses DeinterleavingSink, which likely expects begin/end or at least match events with paths.
+    // We only need "match" events for txed to work?
+    // txed's stream_rg_json_ndjson uses DeinterleavingSink, which likely expects begin/end or at least match events with paths.
 
     let mut offset = 0;
     for i in 0..lines {
@@ -134,10 +134,10 @@ fn test_rg_json_streaming() {
         offset += line_text.len();
     }
 
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     cmd.arg("world") // FIND is ignored in rg-json mode usually, or strictly used for replacement?
         // Wait, if using rg-json, we are targeting specific spans.
-        // Does stedi require FIND/REPLACE args in rg-json mode?
+        // Does txed require FIND/REPLACE args in rg-json mode?
         // CLI arg "find" is Option<String>.
         // But usually with rg-json, we might be providing replacement via args?
         // Let's check `resolve_input_mode` calls `read_rg_json`.

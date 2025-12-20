@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use std::fs;
 use std::io::IsTerminal;
@@ -96,7 +96,6 @@ fn try_main() -> Result<i32> {
             (manifest_path, None, None, vec![], default_args)
         }
         None => {
-            // Default command behavior: stedi [OPTIONS] FIND REPLACE [FILES...]
             let default_args = cli.args;
             (
                 default_args.manifest.clone(),

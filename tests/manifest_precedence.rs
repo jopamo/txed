@@ -27,7 +27,7 @@ fn test_manifest_transaction_override() {
     // To verify, we can inspect JSON output if it exposes transaction mode.
     // The event stream "run_start" event should contain "transaction_mode".
 
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     let output = cmd
         .arg("apply")
         .arg("--manifest")
@@ -37,7 +37,7 @@ fn test_manifest_transaction_override() {
         .unwrap();
 
     if !output.status.success() {
-        eprintln!("SD2 Failed: {}", String::from_utf8_lossy(&output.stderr));
+        eprintln!("TXED Failed: {}", String::from_utf8_lossy(&output.stderr));
         panic!("Command failed");
     }
 
@@ -71,7 +71,7 @@ fn test_manifest_transaction_override() {
     assert_eq!(run_start["transaction_mode"], "file");
 
     // Run WITH CLI override "--transaction all"
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     let output = cmd
         .arg("apply")
         .arg("--manifest")

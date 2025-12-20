@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 use crate::model::ReplacementRange;
-use crate::rgjson::{DeinterleavingSink, stream_rg_json_ndjson};
+use crate::rgjson::{stream_rg_json_ndjson, DeinterleavingSink};
 use std::io::{self, BufRead, BufReader, Read};
 use std::path::PathBuf;
 

@@ -12,7 +12,7 @@ fn test_repeated_inputs_no_transaction() {
     let file_path = dir.path().join("file.txt");
     fs::write(&file_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")
@@ -34,7 +34,7 @@ fn test_repeated_inputs_chained_no_transaction() {
     let file_path = dir.path().join("file.txt");
     fs::write(&file_path, "A").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.current_dir(dir.path())
         .arg("--regex")
         .arg("[A-Z]")
@@ -60,7 +60,7 @@ fn test_repeated_inputs_transaction_all() {
     let file_path = dir.path().join("file.txt");
     fs::write(&file_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")
@@ -81,7 +81,7 @@ fn test_glob_include_exclude_precedence() {
     fs::write(dir.path().join("b.txt"), "foo").unwrap();
     fs::write(dir.path().join("c.md"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")
@@ -106,7 +106,7 @@ fn test_glob_exclude_only() {
     fs::write(dir.path().join("a.txt"), "foo").unwrap();
     fs::write(dir.path().join("b.txt"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")

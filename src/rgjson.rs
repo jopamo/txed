@@ -1,6 +1,6 @@
-use anyhow::{Context, Result, anyhow};
-use base64::Engine as _;
+use anyhow::{anyhow, Context, Result};
 use base64::engine::general_purpose::STANDARD;
+use base64::Engine as _;
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -31,7 +31,7 @@ pub enum RgKind {
 #[derive(Debug, Deserialize)]
 pub struct RgData {
     pub path: Option<RgTextOrBytes>,
-    // These fields are part of the ripgrep JSON schema but not directly used by stedi's current replacement logic.
+    // These fields are part of the ripgrep JSON schema but not directly used by txed's current replacement logic.
     // Kept for schema compliance and potential future use (e.g., verbose reporting, validation).
     #[allow(dead_code)]
     #[serde(default)]
@@ -47,7 +47,7 @@ pub struct RgData {
 
 #[derive(Debug, Deserialize)]
 pub struct RgSubmatch {
-    // This field is part of the ripgrep JSON schema but not directly used by stedi's current replacement logic.
+    // This field is part of the ripgrep JSON schema but not directly used by txed's current replacement logic.
     // Kept for schema compliance and potential future use (e.g., verbose reporting, validation).
     #[allow(dead_code)]
     #[serde(default)]

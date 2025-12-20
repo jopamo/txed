@@ -2,8 +2,8 @@ use assert_cmd::cargo::cargo_bin_cmd;
 use serde_json::Value;
 use std::fs;
 
-fn run_stedi_json(args: &[&str]) -> Vec<Value> {
-    let mut cmd = cargo_bin_cmd!("stedi");
+fn run_txed_json(args: &[&str]) -> Vec<Value> {
+    let mut cmd = cargo_bin_cmd!("txed");
     let output = cmd.args(args).arg("--format=json").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
 
@@ -21,7 +21,7 @@ fn test_json_v1_fields_run_end_committed() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap()];
-    let events = run_stedi_json(&args);
+    let events = run_txed_json(&args);
 
     let end_wrapper = events.last().unwrap();
     let end = &end_wrapper["run_end"];
@@ -39,7 +39,7 @@ fn test_json_v1_fields_run_end_committed_dry_run() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap(), "--dry-run"];
-    let events = run_stedi_json(&args);
+    let events = run_txed_json(&args);
 
     let end_wrapper = events.last().unwrap();
     let end = &end_wrapper["run_end"];
@@ -50,7 +50,7 @@ fn test_json_v1_fields_run_end_committed_dry_run() {
 
 #[test]
 fn test_json_v1_fields_file_is_virtual() {
-    let mut cmd = cargo_bin_cmd!("stedi");
+    let mut cmd = cargo_bin_cmd!("txed");
     let output = cmd
         .arg("hello")
         .arg("goodbye")
@@ -81,7 +81,7 @@ fn test_json_v1_fields_file_not_virtual() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap()];
-    let events = run_stedi_json(&args);
+    let events = run_txed_json(&args);
 
     let file_event = &events[1]["file"];
     assert_eq!(file_event["type"], "success");
@@ -96,7 +96,7 @@ fn test_json_v1_fields_error_code() {
     // Don't create the file, so it fails with NotFound
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap()];
-    let events = run_stedi_json(&args);
+    let events = run_txed_json(&args);
 
     let file_event = &events[1]["file"];
     assert_eq!(file_event["type"], "error");

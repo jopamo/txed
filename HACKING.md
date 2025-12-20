@@ -1,6 +1,6 @@
 # HACKING
 
-Developer onboarding for `stedi`.
+Developer onboarding for `txed`.
 
 * End-user CLI usage: `README.md`
 * Internal architecture and data flow: `DESIGN.md`
@@ -11,7 +11,7 @@ This document is **normative** for contributors.
 
 ## Project Overview
 
-`stedi` is a stream-oriented text processor written in Rust.
+`txed` is a stream-oriented text processor written in Rust.
 
 It serves two audiences:
 
@@ -32,7 +32,7 @@ These are not preferences. They are invariants.
   Files are never left partially modified. All writes are transactional.
 
 * **Explicit scope**
-  `stedi` does not walk directories or infer intent.
+  `txed` does not walk directories or infer intent.
   Input files must be named or streamed explicitly.
 
 * **Structured I/O**
@@ -221,4 +221,4 @@ These are explicitly out of scope:
 * “Smart” behavior that hides ambiguity
 * Compatibility hacks that break determinism
 
-If a feature needs guessing, it does not belong in `stedi`.
+If a feature needs guessing, it does not belong in `txed`.

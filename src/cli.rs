@@ -1,7 +1,7 @@
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
-/// stedi: A structured text transformation tool.
+/// txed: A structured text transformation tool.
 /// Use with ripgrep for file selection, or provide a JSON manifest for complex operations.
 #[derive(Debug, Clone, clap::ValueEnum, PartialEq)]
 #[clap(rename_all = "kebab-case")]
@@ -49,7 +49,7 @@ pub enum OutputFormat {
 }
 #[derive(Parser, Debug)]
 #[command(
-    name = "stedi",
+    name = "txed",
     author,
     version,
     about,
@@ -79,7 +79,7 @@ pub enum Commands {
     Apply(ApplyArgs),
 }
 
-/// Default command: stedi FIND REPLACE [FILES...]
+/// Default command: txed FIND REPLACE [FILES...]
 #[derive(Args, Debug)]
 pub struct DefaultArgs {
     /// JSON manifest file specifying transformations. Used with `apply` command.

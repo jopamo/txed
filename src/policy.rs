@@ -162,12 +162,10 @@ mod tests {
 
         enforcer.enforce_post_run(&mut report);
         assert!(report.policy_violation.is_some());
-        assert!(
-            report
-                .policy_violation
-                .unwrap()
-                .contains("No matches found")
-        );
+        assert!(report
+            .policy_violation
+            .unwrap()
+            .contains("No matches found"));
     }
 
     #[test]
@@ -180,12 +178,10 @@ mod tests {
 
         enforcer.enforce_post_run(&mut report);
         assert!(report.policy_violation.is_some());
-        assert!(
-            report
-                .policy_violation
-                .unwrap()
-                .contains("Changes detected")
-        );
+        assert!(report
+            .policy_violation
+            .unwrap()
+            .contains("Changes detected"));
     }
 
     #[test]

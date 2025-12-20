@@ -1,10 +1,10 @@
-# Integrating `stedi` into a Model Context Protocol (MCP) Server
+# Integrating `txed` into a Model Context Protocol (MCP) Server
 
-This document describes how to expose the `stedi` binary as a tool in a Python-based **Model Context Protocol (MCP)** server.
+This document describes how to expose the `txed` binary as a tool in a Python-based **Model Context Protocol (MCP)** server.
 
-The goal is to allow LLMs (Claude Desktop, Cursor, or custom agents) to perform **safe, atomic, and deterministic** text edits on a codebase by delegating all mutation logic to `stedi`.
+The goal is to allow LLMs (Claude Desktop, Cursor, or custom agents) to perform **safe, atomic, and deterministic** text edits on a codebase by delegating all mutation logic to `txed`.
 
-This integration treats `stedi` as the **sole authority** for filesystem edits.
+This integration treats `txed` as the **sole authority** for filesystem edits.
 
 ---
 
@@ -19,7 +19,7 @@ This integration treats `stedi` as the **sole authority** for filesystem edits.
 
 ## Prerequisites
 
-* `stedi` installed and available on `$PATH` (or via absolute path)
+* `txed` installed and available on `$PATH` (or via absolute path)
 * Python **3.10+**
 * `uv` (recommended) or `pip`
 * An MCP-capable client (Claude Desktop, Cursor, etc.)
@@ -30,15 +30,15 @@ This integration treats `stedi` as the **sole authority** for filesystem edits.
 
 The integration uses MCP’s **stdio transport**.
 
-The Python process acts as the MCP server and invokes `stedi` via `subprocess`.
-All filesystem mutation happens inside `stedi`.
+The Python process acts as the MCP server and invokes `txed` via `subprocess`.
+All filesystem mutation happens inside `txed`.
 
 ```mermaid
 [LLM Client]
     ⇄ MCP (stdio)
         ⇄ Python MCP Server
             ⇄ subprocess
-                ⇄ stedi
+                ⇄ txed
                     ⇄ filesystem
 ```
 
@@ -46,7 +46,7 @@ Key properties:
 
 * The LLM never touches the filesystem directly
 * The Python layer is a thin adapter, not an editor
-* `stedi --format json` is the API boundary
+* `txed --format json` is the API boundary
 
 ---
 
@@ -55,8 +55,8 @@ Key properties:
 Create a new Python project for the MCP server:
 
 ```bash
-uv init stedi-mcp
-cd stedi-mcp
+uv init txed-mcp
+cd txed-mcp
 uv add "mcp[cli]"
 ```
 
@@ -70,13 +70,13 @@ This project should contain **no code that edits files directly**.
 
 The server exposes two tools:
 
-1. **`stedi_replace`**
+1. **`txed_replace`**
    Simple, direct replacements on explicit file lists
 
-2. **`stedi_apply`**
+2. **`txed_apply`**
    Manifest-based, multi-file atomic operations (agent mode)
 
-All output is derived from `stedi`’s JSON event stream.
+All output is derived from `txed`’s JSON event stream.
 
 ---
 
@@ -90,16 +90,16 @@ import tempfile
 from typing import Optional, List, Dict, Any
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("stedi-tools")
+mcp = FastMCP("txed-tools")
 
-SD2_BINARY = "stedi"  # must be resolvable via PATH or absolute path
+TXED_BINARY = "txed"  # must be resolvable via PATH or absolute path
 
 
-def run_stedi_command(args: List[str], input_data: Optional[str] = None) -> str:
+def run_txed_command(args: List[str], input_data: Optional[str] = None) -> str:
     """
-    Run stedi with forced JSON output and summarize results for the LLM.
+    Run txed with forced JSON output and summarize results for the LLM.
     """
-    final_args = [SD2_BINARY] + args + ["--format=json"]
+    final_args = [TXED_BINARY] + args + ["--format=json"]
 
     try:
         process = subprocess.Popen(
@@ -111,7 +111,7 @@ def run_stedi_command(args: List[str], input_data: Optional[str] = None) -> str:
         )
         stdout, stderr = process.communicate(input=input_data)
     except FileNotFoundError:
-        return f"Error: '{SD2_BINARY}' not found in PATH"
+        return f"Error: '{TXED_BINARY}' not found in PATH"
 
     modified = []
     errors = []
@@ -163,7 +163,7 @@ def run_stedi_command(args: List[str], input_data: Optional[str] = None) -> str:
 
 
 @mcp.tool()
-def stedi_replace(
+def txed_replace(
     find: str,
     replace: str,
     files: List[str],
@@ -180,11 +180,11 @@ def stedi_replace(
     if dry_run:
         args.append("--dry-run")
 
-    return run_stedi_command(args)
+    return run_txed_command(args)
 
 
 @mcp.tool()
-def stedi_apply(
+def txed_apply(
     manifest: Dict[str, Any],
     dry_run: bool = False,
 ) -> str:
@@ -202,7 +202,7 @@ def stedi_apply(
         if dry_run:
             args.append("--dry-run")
 
-        return run_stedi_command(args)
+        return run_txed_command(args)
     finally:
         try:
             shutil.os.remove(manifest_path)
@@ -225,11 +225,11 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "stedi": {
+    "txed": {
       "command": "uv",
       "args": [
         "run",
-        "/absolute/path/to/stedi-mcp/server.py"
+        "/absolute/path/to/txed-mcp/server.py"
       ]
     }
   }
@@ -246,14 +246,14 @@ Add a new MCP server:
 * **Command:**
 
   ```text
-  uv run /absolute/path/to/stedi-mcp/server.py
+  uv run /absolute/path/to/txed-mcp/server.py
   ```
 
 ---
 
 ## Behavioral Guarantees
 
-This integration relies on guarantees provided by `stedi`:
+This integration relies on guarantees provided by `txed`:
 
 ### Atomicity
 
@@ -283,14 +283,14 @@ This integration intentionally does **not**:
 * Guess which files should be edited
 * Perform directory traversal
 
-All such logic must be expressed explicitly via `stedi`.
+All such logic must be expressed explicitly via `txed`.
 
 ---
 
 ## Recommended Agent Usage
 
-* Use **`stedi_replace`** for small, obvious changes
-* Use **`stedi_apply`** for:
+* Use **`txed_replace`** for small, obvious changes
+* Use **`txed_apply`** for:
 
   * multi-file refactors
   * deletes

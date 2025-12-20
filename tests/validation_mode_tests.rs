@@ -9,7 +9,7 @@ fn test_validation_mode_strict_fail() {
     let file_path = dir.path().join("strict.txt");
     fs::write(&file_path, "hello world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg(r"(\w+)")
         .arg("$1bad") // Ambiguous
         .arg(file_path.to_str().unwrap())
@@ -30,7 +30,7 @@ fn test_validation_mode_warn_rewrite() {
     let file_path = dir.path().join("warn.txt");
     fs::write(&file_path, "hello world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg(r"(\w+)")
         .arg("$1bad") // Ambiguous
         .arg(file_path.to_str().unwrap())
@@ -55,7 +55,7 @@ fn test_validation_mode_none_silent() {
     let file_path = dir.path().join("none.txt");
     fs::write(&file_path, "hello world").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg(r"(\w+)")
         .arg("$1bad") // Ambiguous, treated as group '1bad' by regex (empty)
         .arg(file_path.to_str().unwrap())
@@ -80,7 +80,7 @@ fn test_validation_mode_default_strict() {
     fs::write(&file_path, "hello world").unwrap();
 
     // Default should be strict
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_txed"));
     cmd.arg(r"(\w+)")
         .arg("$1bad")
         .arg(file_path.to_str().unwrap())

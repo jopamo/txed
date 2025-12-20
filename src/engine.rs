@@ -2,11 +2,11 @@ use crate::error::{Error, Result};
 use crate::input::InputItem;
 use crate::model::ReplacementRange;
 use crate::model::{BinaryFileMode, Operation, Pipeline, Symlinks, Transaction};
-use crate::policy::{PolicyEnforcer, enforce_pre_execution};
+use crate::policy::{enforce_pre_execution, PolicyEnforcer};
 use crate::replacer::Replacer;
 use crate::reporter::{FileResult, Report};
 use crate::transaction::TransactionManager;
-use crate::write::{StagedEntry, WriteOptions, stage_file, write_file};
+use crate::write::{stage_file, write_file, StagedEntry, WriteOptions};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -809,13 +809,11 @@ mod tests {
         let report = execute(p, vec![InputItem::StdinText("baz".into())]).unwrap();
 
         assert!(report.policy_violation.is_some());
-        assert!(
-            report
-                .policy_violation
-                .as_ref()
-                .unwrap()
-                .contains("No matches found")
-        );
+        assert!(report
+            .policy_violation
+            .as_ref()
+            .unwrap()
+            .contains("No matches found"));
         assert_eq!(report.exit_code(), 2);
     }
 
@@ -829,13 +827,11 @@ mod tests {
         let report = execute(p, vec![InputItem::StdinText("foo".into())]).unwrap();
 
         assert!(report.policy_violation.is_some());
-        assert!(
-            report
-                .policy_violation
-                .as_ref()
-                .unwrap()
-                .contains("Expected 2 replacements, found 1")
-        );
+        assert!(report
+            .policy_violation
+            .as_ref()
+            .unwrap()
+            .contains("Expected 2 replacements, found 1"));
         assert_eq!(report.exit_code(), 2);
     }
 
@@ -849,13 +845,11 @@ mod tests {
 
         assert!(report.modified > 0);
         assert!(report.policy_violation.is_some());
-        assert!(
-            report
-                .policy_violation
-                .as_ref()
-                .unwrap()
-                .contains("Changes detected")
-        );
+        assert!(report
+            .policy_violation
+            .as_ref()
+            .unwrap()
+            .contains("Changes detected"));
         assert_eq!(report.exit_code(), 2);
     }
 }
