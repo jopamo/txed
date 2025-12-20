@@ -66,7 +66,7 @@ pub fn validate_replacement(replacement: &str, mode: ValidationMode) -> Result<C
 
                             new_replacement.push_str("${");
                             new_replacement.push_str(&name[..digit_count]);
-                            new_replacement.push_str("}");
+                            new_replacement.push('}');
                             new_replacement.push_str(&name[digit_count..]);
 
                             last_end = capture.end;
