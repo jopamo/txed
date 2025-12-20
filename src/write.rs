@@ -52,6 +52,8 @@ pub fn stage_file(path: &Path, data: &[u8], options: &WriteOptions) -> Result<St
                 let p = fs::Permissions::from_mode(mode);
                 temp.as_file().set_permissions(p)?;
             }
+            #[cfg(not(unix))]
+            let _ = mode;
         }
     }
 

@@ -112,7 +112,7 @@ impl RgTextOrBytes {
             // Fallback for Windows/Wasm where paths *must* be valid WTF-8/UTF-8
             let s = match raw_cow {
                 Cow::Borrowed(b) => String::from_utf8_lossy(b),
-                Cow::Owned(v) => String::from_utf8_lossy(&v).into_owned(),
+                Cow::Owned(v) => String::from_utf8_lossy(&v).into_owned().into(),
             };
             Ok(OsString::from(s.into_owned()))
         }
