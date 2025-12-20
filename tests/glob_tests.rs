@@ -9,7 +9,7 @@ fn test_glob_include() {
     fs::write(dir.path().join("match.txt"), "foo").unwrap();
     fs::write(dir.path().join("ignore.md"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.current_dir(dir.path())
 
         .arg("foo")
@@ -31,7 +31,7 @@ fn test_glob_exclude() {
     fs::write(dir.path().join("match.txt"), "foo").unwrap();
     fs::write(dir.path().join("ignore.md"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.current_dir(dir.path())
 
         .arg("foo")
@@ -54,7 +54,7 @@ fn test_glob_include_exclude_combined() {
     fs::write(dir.path().join("b.txt"), "foo").unwrap();
     fs::write(dir.path().join("c.md"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.current_dir(dir.path())
 
         .arg("foo")
@@ -81,7 +81,7 @@ fn test_glob_absolute_path_recursive() {
     fs::create_dir_all(abs_path.parent().unwrap()).unwrap();
     fs::write(&abs_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     // Pass absolute path
     // glob "**/*.txt" should match it
     
@@ -103,7 +103,7 @@ fn test_glob_absolute_path_basename_match() {
     let abs_path = dir.path().join("match.txt");
     fs::write(&abs_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     // "*.txt" matches basename even in absolute path (globset behavior)
     
     cmd
@@ -124,7 +124,7 @@ fn test_glob_absolute_path_extension_mismatch() {
     let abs_path = dir.path().join("match.md");
     fs::write(&abs_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     
     cmd
         .arg("foo")

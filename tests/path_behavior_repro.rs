@@ -8,7 +8,7 @@ fn test_dot_slash_prefix_vs_glob() {
     fs::create_dir(dir.path().join("src")).unwrap();
     fs::write(dir.path().join("src/match.txt"), "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")
@@ -29,7 +29,7 @@ fn test_absolute_path_vs_relative_glob() {
     let abs_path = dir.path().join("src/match2.txt");
     fs::write(&abs_path, "foo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.current_dir(dir.path())
         .arg("foo")
         .arg("bar")

@@ -13,7 +13,7 @@ fn test_default_output_format_non_tty() {
     let file_path = dir.path().join("test.txt");
     fs::write(&file_path, "hello world").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("hello")
         .arg("goodbye")
         .arg(&file_path)
@@ -35,7 +35,7 @@ fn test_explicit_format_summary() {
     let file_path = dir.path().join("test.txt");
     fs::write(&file_path, "foo bar").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
         .arg("baz")
         .arg(&file_path)
@@ -61,7 +61,7 @@ fn test_explicit_format_agent() {
     let file_path = dir.path().join("agent.txt");
     fs::write(&file_path, "foo bar").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
         .arg("baz")
         .arg(&file_path)

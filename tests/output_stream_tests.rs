@@ -8,7 +8,7 @@ fn test_output_streams_normal() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--format=summary")
@@ -25,7 +25,7 @@ fn test_output_streams_policy_error() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--format=summary")
@@ -53,7 +53,7 @@ fn test_output_streams_file_error() {
     perms.set_readonly(true);
     fs::set_permissions(&subdir, perms).unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--format=summary")
@@ -72,7 +72,7 @@ fn test_output_streams_json_stdout_only() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--json")
@@ -89,7 +89,7 @@ fn test_output_streams_json_errors_stdout_only() {
     let file = dir.path().join("file.txt");
     fs::write(&file, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--json")
@@ -104,7 +104,7 @@ fn test_output_streams_json_errors_stdout_only() {
 
 #[test]
 fn test_output_streams_stdin_text_human() {
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.write_stdin("foo")
        .arg("foo")
        .arg("bar")
@@ -118,7 +118,7 @@ fn test_output_streams_stdin_text_human() {
 
 #[test]
 fn test_output_streams_stdin_text_json() {
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.write_stdin("foo")
        .arg("foo")
        .arg("bar")

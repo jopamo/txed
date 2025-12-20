@@ -8,7 +8,7 @@ fn test_range_single_line() {
     let file_path = dir.path().join("test_range.txt");
     fs::write(&file_path, "foo\nfoo\nfoo\nfoo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd
 
         .arg("foo")
@@ -29,7 +29,7 @@ fn test_range_start_end() {
     let file_path = dir.path().join("test_range_2.txt");
     fs::write(&file_path, "foo\nfoo\nfoo\nfoo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd
 
         .arg("foo")
@@ -50,7 +50,7 @@ fn test_range_start_unbounded() {
     let file_path = dir.path().join("test_range_3.txt");
     fs::write(&file_path, "foo\nfoo\nfoo\nfoo").unwrap();
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd
 
         .arg("foo")

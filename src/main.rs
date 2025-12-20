@@ -90,7 +90,7 @@ fn try_main() -> Result<i32> {
             (manifest_path, None, None, vec![], default_args)
         }
         None => {
-            // Default command behavior: sd2 [OPTIONS] FIND REPLACE [FILES...]
+            // Default command behavior: stedi [OPTIONS] FIND REPLACE [FILES...]
             let default_args = cli.args;
             (default_args.manifest.clone(), default_args.find.clone(), default_args.replace.clone(), default_args.files.clone(), default_args)
         }

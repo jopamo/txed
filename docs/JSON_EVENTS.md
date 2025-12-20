@@ -1,6 +1,6 @@
 # JSON Event Schema
 
-When `sd2` runs with `--format json` (or when JSON output is selected implicitly), it emits a **newline-delimited JSON (NDJSON)** stream.
+When `stedi` runs with `--format json` (or when JSON output is selected implicitly), it emits a **newline-delimited JSON (NDJSON)** stream.
 Each line is a complete, self-contained event object.
 
 This document is **normative**.
@@ -73,7 +73,7 @@ Describes configuration, modes, and active policies.
 | Field              | Type    | Description                                                                      |
 | ------------------ | ------- | -------------------------------------------------------------------------------- |
 | `schema_version`   | string  | JSON event schema version. Currently `"1"`                                       |
-| `tool_version`     | string  | `sd2` version string                                                             |
+| `tool_version`     | string  | `stedi` version string                                                             |
 | `mode`             | string  | `"cli"` or `"apply"`                                                             |
 | `input_mode`       | string  | `"args"`, `"stdin-paths"`, `"stdin-text"`, `"rg-json"`, `"files0"`, `"manifest"` |
 | `transaction_mode` | string  | `"all"` or `"file"`                                                              |

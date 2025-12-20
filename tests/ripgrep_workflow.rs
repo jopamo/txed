@@ -21,12 +21,12 @@ fn test_rg_l_integration() {
 
     assert!(rg_output.status.success(), "rg failed");
 
-    // 3. Run sd2 using the output from rg
-    let mut cmd = cargo_bin_cmd!("sd2");
+    // 3. Run stedi using the output from rg
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("unwrap()")
        .arg("expect(\"safe\")")
        .write_stdin(rg_output.stdout)
-       .current_dir(dir.path()) // Important so sd2 finds the file by relative path if rg output is relative
+       .current_dir(dir.path()) // Important so stedi finds the file by relative path if rg output is relative
        .assert()
        .success();
 
@@ -40,11 +40,11 @@ fn test_rg_json_integration() {
     // 1. Setup
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("messy.rs");
-    // Messy content: multiple unwraps, some inside strings (which rg might match depending on pattern, but sd2 replacer logic usually replaces everything unless scoped. 
-    // BUT --rg-json mode means sd2 receives specific ranges. 
-    // If rg matches "unwrap" inside a string, sd2 will replace it if we pass "unwrap" as FIND.
+    // Messy content: multiple unwraps, some inside strings (which rg might match depending on pattern, but stedi replacer logic usually replaces everything unless scoped. 
+    // BUT --rg-json mode means stedi receives specific ranges. 
+    // If rg matches "unwrap" inside a string, stedi will replace it if we pass "unwrap" as FIND.
     // However, the power of --rg-json is we can use rg's smarts (e.g. rust grammar if rg supported it, or just precise context).
-    // Let's test that sd2 *only* touches what rg reports.
+    // Let's test that stedi *only* touches what rg reports.
     
     let content = r#" 
 fn main() {
@@ -58,18 +58,18 @@ fn main() {
     // 2. Run rg --json
     // We search for "unwrap" but only matching word boundary to avoid "unwrap" in string if possible? 
     // rg doesn't know rust grammar by default. 
-    // Let's just search for "unwrap" and see if sd2 replaces ALL of them if rg reports ALL of them.
-    // To prove targetedness, we can construct a scenario where rg *skips* one but sd2 would match it if it scanned the file.
+    // Let's just search for "unwrap" and see if stedi replaces ALL of them if rg reports ALL of them.
+    // To prove targetedness, we can construct a scenario where rg *skips* one but stedi would match it if it scanned the file.
     // Example: rg search for "unwrap" but restricted to line 3.
     // rg doesn't easily restrict to lines via CLI args except via -N.
-    // Actually, `sd2 --rg-json FIND REPLACE` uses `FIND` to build the `Replacer`.
+    // Actually, `stedi --rg-json FIND REPLACE` uses `FIND` to build the `Replacer`.
     // It *also* uses the ranges from rg.
-    // So `sd2` will ONLY replace if:
+    // So `stedi` will ONLY replace if:
     // 1. The text matches `FIND` (as regex/literal)
     // 2. AND the text is within the ranges reported by rg.
     
     // So if we have "unwrap" twice, and rg only reports one (e.g. because we grepped for `let x.*unwrap`), 
-    // sd2 should only replace that one.
+    // stedi should only replace that one.
     
     let rg_output = StdCommand::new("/usr/bin/rg")
         .arg("--json")
@@ -80,19 +80,19 @@ fn main() {
 
     assert!(rg_output.status.success());
 
-    // 3. Run sd2 --rg-json
+    // 3. Run stedi --rg-json
     // We want to replace "unwrap" with "expect"
     // The rg match is "let x = option.unwrap();" (the whole line matches the pattern)
     // The rg json will contain a submatch for the whole match? 
     // Wait, rg json `submatches` usually contains the match of the pattern.
     // If pattern is "let x.*unwrap", the match is that whole string.
-    // sd2 receives that range.
-    // sd2's FIND is "unwrap".
-    // sd2 will search for "unwrap" *within* the range "let x = option.unwrap();".
+    // stedi receives that range.
+    // stedi's FIND is "unwrap".
+    // stedi will search for "unwrap" *within* the range "let x = option.unwrap();".
     // It will find it and replace it.
     // It will NOT replace the "unwrap" on the z line because rg didn't report that line.
     
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("--rg-json")
        .arg("unwrap")
        .arg("expect")
@@ -125,8 +125,8 @@ fn test_rg_json_messy_utf8() {
         .output()
         .expect("failed to execute rg");
 
-    // 3. Run sd2
-    let mut cmd = cargo_bin_cmd!("sd2");
+    // 3. Run stedi
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("--rg-json")
        .arg("unwrap")
        .arg("expect")
@@ -163,7 +163,7 @@ fn test_real_world_engine_rs() {
 
     assert!(rg_output.status.success());
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("Pipeline")
        .arg("PipeLine")
        .write_stdin(rg_output.stdout)
@@ -186,7 +186,7 @@ fn test_real_world_engine_rs() {
 
     assert!(rg_json_output.status.success());
 
-    let mut cmd2 = cargo_bin_cmd!("sd2");
+    let mut cmd2 = cargo_bin_cmd!("stedi");
     cmd2.arg("--rg-json")
        .arg("InputItem")
        .arg("InItem")

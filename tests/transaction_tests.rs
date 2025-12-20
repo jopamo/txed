@@ -12,7 +12,7 @@ fn test_transaction_file_mode_partial_failure() {
     fs::write(&f1, "foo").unwrap();
     fs::write(&f2, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--transaction")
@@ -39,7 +39,7 @@ fn test_transaction_all_mode_rollback() {
     fs::write(&f1, "foo").unwrap();
     fs::write(&f2, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--transaction")
@@ -64,7 +64,7 @@ fn test_transaction_all_mode_success() {
     fs::write(&f1, "foo").unwrap();
     fs::write(&f2, "foo").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("bar")
        .arg("--transaction")

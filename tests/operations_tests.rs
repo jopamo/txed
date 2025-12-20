@@ -20,7 +20,7 @@ fn test_operation_delete() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());
@@ -51,7 +51,7 @@ fn test_operation_replace_expand() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());
@@ -81,7 +81,7 @@ fn test_operation_delete_regex() {
     });
     fs::write(&manifest_path, manifest.to_string()).unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("apply")
        .arg("--manifest")
        .arg(manifest_path.to_str().unwrap());

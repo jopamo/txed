@@ -3,7 +3,7 @@ use predicates::prelude::*;
 
 #[test]
 fn test_stdin_text_json_output() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.arg("foo")
        .arg("bar")
        .arg("--stdin-text")
@@ -16,7 +16,7 @@ fn test_stdin_text_json_output() {
 
 #[test]
 fn test_stdin_text_json_no_change() {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_sd2"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_stedi"));
     cmd.arg("zzz")
        .arg("bar")
        .arg("--stdin-text")

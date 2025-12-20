@@ -42,7 +42,7 @@ fn test_dogfood_self_refactor() {
 
     // Perform a project-wide rename: "Result" -> "SdResult"
     // We use word boundaries to avoid replacing "FileResult" -> "FileSdResult"
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("Result")
        .arg("SdResult")
        .arg("--files0")

@@ -2,8 +2,8 @@ use assert_cmd::cargo::cargo_bin_cmd;
 use serde_json::Value;
 use std::fs;
 
-fn run_sd2_json(args: &[&str]) -> Vec<Value> {
-    let mut cmd = cargo_bin_cmd!("sd2");
+fn run_stedi_json(args: &[&str]) -> Vec<Value> {
+    let mut cmd = cargo_bin_cmd!("stedi");
     let output = cmd.args(args).arg("--format=json").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     
@@ -20,7 +20,7 @@ fn test_json_golden_path() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap()];
-    let events = run_sd2_json(&args);
+    let events = run_stedi_json(&args);
 
     assert_eq!(events.len(), 3); // RunStart, File, RunEnd
 
@@ -37,7 +37,7 @@ fn test_json_golden_path() {
     assert!(file_wrapper.get("file").is_some());
     let file_event = &file_wrapper["file"];
     assert_eq!(file_event["type"], "success");
-    // path might differ in format (absolute vs relative) depending on how sd2 handles it
+    // path might differ in format (absolute vs relative) depending on how stedi handles it
     // we passed absolute path, so it should be absolute.
     assert_eq!(file_event["path"], file_path.to_str().unwrap());
     assert_eq!(file_event["modified"], true);
@@ -62,7 +62,7 @@ fn test_json_skip_reasons() {
     fs::write(&bin_path, b"hello\0world").unwrap();
 
     let args = vec!["hello", "goodbye", bin_path.to_str().unwrap()];
-    let events = run_sd2_json(&args);
+    let events = run_stedi_json(&args);
     
     let file_event = &events[1]["file"];
     assert_eq!(file_event["type"], "skipped");
@@ -76,7 +76,7 @@ fn test_json_validate_only() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap(), "--validate-only"];
-    let events = run_sd2_json(&args);
+    let events = run_stedi_json(&args);
 
     let start = &events[0]["run_start"];
     assert_eq!(start["validate_only"], true);
@@ -99,7 +99,7 @@ fn test_json_no_write() {
     fs::write(&file_path, "hello world").unwrap();
 
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap(), "--no-write"];
-    let events = run_sd2_json(&args);
+    let events = run_stedi_json(&args);
 
     let start = &events[0]["run_start"];
     assert_eq!(start["no_write"], true);
@@ -115,8 +115,8 @@ fn test_json_no_write() {
 
 #[test]
 fn test_json_stdin_text() {
-    // For stdin, we need to use Command builder differently than run_sd2_json helper
-    let mut cmd = cargo_bin_cmd!("sd2");
+    // For stdin, we need to use Command builder differently than run_stedi_json helper
+    let mut cmd = cargo_bin_cmd!("stedi");
     let output = cmd
         .arg("hello")
         .arg("goodbye")
@@ -159,7 +159,7 @@ fn test_json_transaction_staging_failure() {
     // Use transaction all
     let args = vec!["hello", "goodbye", file_path.to_str().unwrap(), "--transaction=all"];
     
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     let output_result = cmd.args(&args).arg("--format=json").output();
     
     // Cleanup: restore permissions so tempdir can be deleted

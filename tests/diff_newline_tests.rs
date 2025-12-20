@@ -9,7 +9,7 @@ fn test_diff_no_trailing_newline() {
     // Write content without a trailing newline
     fs::write(&file, "foo\nbar").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("bar")
        .arg("baz")
        .arg("--format=diff")
@@ -28,7 +28,7 @@ fn test_diff_crlf_preservation() {
     // Write content with CRLF
     fs::write(&file, "foo\r\nbar\r\n").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("baz")
        .arg("--format=diff")
@@ -46,7 +46,7 @@ fn test_content_preservation_no_trailing_newline() {
     let file = dir.path().join("no_newline_apply.txt");
     fs::write(&file, "foo\nbar").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("bar")
        .arg("baz")
        .arg(file.to_str().unwrap())
@@ -63,7 +63,7 @@ fn test_content_preservation_crlf() {
     let file = dir.path().join("crlf_apply.txt");
     fs::write(&file, "foo\r\nbar\r\n").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     cmd.arg("foo")
        .arg("baz")
        .arg(file.to_str().unwrap())
@@ -80,7 +80,7 @@ fn test_diff_exact_output_no_newline() {
     let file = dir.path().join("no_newline_exact.txt");
     fs::write(&file, "line1\nline2").unwrap();
 
-    let mut cmd = cargo_bin_cmd!("sd2");
+    let mut cmd = cargo_bin_cmd!("stedi");
     let output = cmd.arg("line2")
        .arg("modified")
        .arg("--format=diff")

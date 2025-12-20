@@ -1,12 +1,12 @@
 [package]
-name = "sd2"
+name = "stedi"
 version = "0.1.0"
 edition = "2024"
 authors = ["Your Name <you@example.com>"]
 description = "A safe, fast, deterministic replace engine"
 license = "MIT"
-homepage = "https://github.com/example/sd2"
-repository = "https://github.com/example/sd2.git"
+homepage = "https://github.com/example/stedi"
+repository = "https://github.com/example/stedi.git"
 keywords = ["replace", "regex", "cli", "text-processing"]
 categories = ["command-line-utilities", "text-processing"]
 rust-version = "1.86.0"

@@ -196,7 +196,7 @@ impl Report {
         // For stdin-text, quiet mode probably still wants the output?
         // If I say "quiet", usually I want NO output except errors.
         // But for stdin-text, the output IS the result.
-        // If I do `echo foo | sd2 ... -q`, I probably still want the result?
+        // If I do `echo foo | stedi ... -q`, I probably still want the result?
         // "Ensure --quiet suppresses human output but never suppresses JSON errors/events"
         // It doesn't say anything about data output.
         // But usually -q means "don't print logs".

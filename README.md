@@ -1,16 +1,16 @@
-# `sd2`
+# `stedi`
 
 <div style="background-color: #1e1e1e; padding: 1em; display: inline-block; border-radius: 8px;">
-  <img src=".github/sd2.png" alt="sd2 logo" width="300">
+  <img src=".github/stedi.png" alt="stedi logo" width="300">
 </div>
 
-`sd2` is a **stream-oriented text processor** designed for two audiences:
+`stedi` is a **stream-oriented text processor** designed for two audiences:
 
 * **Humans** who want a safer, clearer CLI than `sed` or `awk`
 * **AI agents** that require structured inputs, deterministic behavior, and strict JSON validation
 
 It follows the Unix philosophy strictly.
-`sd2` does **not** walk directories, infer context, or guess intent. It consumes streams, applies explicit operations, and performs **atomic, transactional edits**.
+`stedi` does **not** walk directories, infer context, or guess intent. It consumes streams, applies explicit operations, and performs **atomic, transactional edits**.
 
 ---
 
@@ -20,8 +20,8 @@ It follows the Unix philosophy strictly.
 *   **Explicit inputs:** Edits only the files you pass (args/stdin); no implicit directory traversal.
 *   **Multiple input modes:** Positional files, newline/NUL-delimited stdin paths, stdin text, or `rg --json` spans.
 *   **Safe previews:** `--dry-run` diffs, `--no-write`, and validation-only runs.
-*   **Structured automation:** JSON event stream (`--format json`) and JSON Schema (`sd2 schema`) for agent tooling.
-*   **Manifest apply mode:** Multi-file pipelines via `sd2 apply --manifest …`.
+*   **Structured automation:** JSON event stream (`--format json`) and JSON Schema (`stedi schema`) for agent tooling.
+*   **Manifest apply mode:** Multi-file pipelines via `stedi apply --manifest …`.
 
 ## Documentation
 
@@ -38,17 +38,17 @@ Simple positional arguments. No regex soup, no flag archaeology.
 
 ```bash
 # Replace 'lazy_static' with 'once_cell' in main.rs
-sd2 "lazy_static" "once_cell" src/main.rs
+stedi "lazy_static" "once_cell" src/main.rs
 ```
 
 ### Search & Destroy Workflow
 
-Let `ripgrep` (`rg`) or `fd` decide **what** to touch, and let `sd2` decide **how** to edit.
+Let `ripgrep` (`rg`) or `fd` decide **what** to touch, and let `stedi` decide **how** to edit.
 
 ```bash
 # Find files containing unwrap()
 # Replace it safely everywhere
-rg -l "unwrap()" | sd2 "unwrap()" "expect(\"checked by safe-mode\")"
+rg -l "unwrap()" | stedi "unwrap()" "expect(\"checked by safe-mode\")"
 ```
 
 No directory traversal.
@@ -63,53 +63,53 @@ No surprises.
 
 ```bash
 # Replace in explicit files
-sd2 [OPTIONS] FIND REPLACE [FILES...]
+stedi [OPTIONS] FIND REPLACE [FILES...]
 
 # Replace in files listed on stdin
-fd -e rs | sd2 [OPTIONS] FIND REPLACE
-rg -l PATTERN | sd2 [OPTIONS] FIND REPLACE
+fd -e rs | stedi [OPTIONS] FIND REPLACE
+rg -l PATTERN | stedi [OPTIONS] FIND REPLACE
 
 # Targeted edits using rg JSON matches
-rg --json PATTERN | sd2 --rg-json [OPTIONS] FIND REPLACE
+rg --json PATTERN | stedi --rg-json [OPTIONS] FIND REPLACE
 
 # Agent workflows
-sd2 schema
-sd2 apply --manifest manifest.json [OPTIONS]
+stedi schema
+stedi apply --manifest manifest.json [OPTIONS]
 ```
 
 ---
 
 ### Commands
 
-**`sd2 FIND REPLACE [FILES...]`**
+**`stedi FIND REPLACE [FILES...]`**
 Default command. Edits provided files or reads file paths from stdin when no files are passed.
 
 **`schema`**
 Print the JSON Schema describing manifests, operations, and output events.
 
 ```bash
-sd2 schema > tools_schema.json
+stedi schema > tools_schema.json
 ```
 
 **`apply --manifest FILE`**
 Apply a manifest (multi-file, multi-operation), with full validation and atomic commit.
 
 ```bash
-sd2 apply --manifest manifest.json
+stedi apply --manifest manifest.json
 ```
 
 ---
 
 ## Input Modes
 
-`sd2` is explicit about what stdin represents.
+`stedi` is explicit about what stdin represents.
 
 ### Auto (default)
 
 If stdin is piped **and** no `FILES...` are provided, stdin is treated as a newline-delimited list of paths.
 
 ```bash
-rg -l unwrap | sd2 unwrap expect
+rg -l unwrap | stedi unwrap expect
 ```
 
 ### `--stdin-paths`
@@ -121,7 +121,7 @@ Force stdin to be interpreted as newline-delimited paths.
 Read **NUL-delimited** paths from stdin. Compatible with `fd -0`, `find -print0`, `rg -l0`.
 
 ```bash
-fd -0 -e rs | sd2 --files0 foo bar
+fd -0 -e rs | stedi --files0 foo bar
 ```
 
 ### `--stdin-text`
@@ -129,7 +129,7 @@ fd -0 -e rs | sd2 --files0 foo bar
 Treat stdin as *content* and write transformed content to stdout. No files are opened.
 
 ```bash
-printf '%s\n' "hello foo" | sd2 --stdin-text foo bar
+printf '%s\n' "hello foo" | stedi --stdin-text foo bar
 ```
 
 ### `--rg-json`
@@ -141,7 +141,7 @@ Consume `rg --json` output from stdin and apply edits **only** to reported match
 * Fails if input is not valid `rg` JSON
 
 ```bash
-rg --json "foo" | sd2 --rg-json foo bar
+rg --json "foo" | stedi --rg-json foo bar
 ```
 
 ### `--files`
@@ -161,7 +161,7 @@ Force positional arguments to be treated as files even when stdin is present.
 Interpret `FIND` as a regular expression.
 
 ```bash
-sd2 --regex 'foo\s+bar' baz file.txt
+stedi --regex 'foo\s+bar' baz file.txt
 ```
 
 ### Case Handling
@@ -180,21 +180,21 @@ sd2 --regex 'foo\s+bar' baz file.txt
 Maximum replacements per file.
 
 ```bash
-sd2 foo bar file.rs --limit 1
+stedi foo bar file.rs --limit 1
 ```
 
 **`--range START[:END]`**
 Apply replacements only within a line range (1-based).
 
 ```bash
-sd2 foo bar file.rs --range 10:200
+stedi foo bar file.rs --range 10:200
 ```
 
 **`--glob-include GLOB`**
 Apply edits only to files whose *paths* match the glob.
 
 ```bash
-fd . | sd2 foo bar --glob-include '**/*.rs'
+fd . | stedi foo bar --glob-include '**/*.rs'
 ```
 
 **`--glob-exclude GLOB`**
@@ -273,16 +273,16 @@ Preview changes without modifying files.
 
 ```bash
 # Preview replacing 3 digits with "NUM"
-sd2 --dry-run --regex '\d{3}' 'NUM' data.txt
+stedi --dry-run --regex '\d{3}' 'NUM' data.txt
 ```
 
 ### Targeted Edits via `ripgrep`
 
-Use `rg` to find specific matches (e.g. only in function bodies) and `sd2` to replace them using the exact spans found by `rg`.
+Use `rg` to find specific matches (e.g. only in function bodies) and `stedi` to replace them using the exact spans found by `rg`.
 
 ```bash
 # Find "foo" only in lines starting with "fn" and replace with "bar"
-rg --json '^fn.*foo' | sd2 --rg-json foo bar
+rg --json '^fn.*foo' | stedi --rg-json foo bar
 ```
 
 ### Bulk Rename via Manifest
@@ -309,7 +309,7 @@ Apply complex multi-file edits transactionally.
 ```
 
 ```bash
-sd2 apply --manifest manifest.json
+stedi apply --manifest manifest.json
 ```
 
 ### Pipeline Validation
@@ -318,10 +318,10 @@ Check if a replacement would change anything without actually doing it.
 
 ```bash
 # Fail if no changes would be made (ensure your regex matches)
-sd2 --require-match foo bar src/
+stedi --require-match foo bar src/
 
 # Fail if changes WOULD be made (verify cleanliness)
-sd2 --fail-on-change --dry-run foo bar src/
+stedi --fail-on-change --dry-run foo bar src/
 ```
 
 ---
@@ -332,7 +332,7 @@ Check the `examples/` directory for ready-to-use recipes:
 
 *   [`examples/manifest_simple.json`](examples/manifest_simple.json): Basic replacement.
 *   [`examples/manifest_advanced.json`](examples/manifest_advanced.json): Regex, deletes, and capture expansion.
-*   [`examples/mcp_server.py`](examples/mcp_server.py): Python script to run `sd2` as a Model Context Protocol server.
+*   [`examples/mcp_server.py`](examples/mcp_server.py): Python script to run `stedi` as a Model Context Protocol server.
 
 ---
 
@@ -357,7 +357,7 @@ Agents submit a **pipeline manifest** describing multi-file atomic edits.
 ```
 
 ```bash
-sd2 apply --manifest manifest.json
+stedi apply --manifest manifest.json
 ```
 
 Options:
@@ -375,7 +375,7 @@ Literal replacement on a large wordlist, streamed to stdout
 
 ### Results
 
-* **sd2 (release, fixed string, stdin-text)**
+* **stedi (release, fixed string, stdin-text)**
   ~**1.36 s** mean
   User: ~0.82 s
   System: ~0.53 s
@@ -387,9 +387,9 @@ Literal replacement on a large wordlist, streamed to stdout
 
 ### Summary
 
-* `sd2` is ~**2.8× faster** than `sed` for this workload
+* `stedi` is ~**2.8× faster** than `sed` for this workload
 * `sed` spends most time in user-space regex processing
-* `sd2` benefits from deterministic parsing and efficient buffered I/O
+* `stedi` benefits from deterministic parsing and efficient buffered I/O
 
 ---
 
@@ -421,3 +421,5 @@ Prebuilt binaries and crates.io publishing are not set up yet.
 ## License
 
 MIT
+
+```
