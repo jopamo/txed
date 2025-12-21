@@ -149,8 +149,17 @@ pub fn stream_rg_json_ndjson<R: BufRead, S: RgSink>(mut reader: R, sink: &mut S)
 
         // We accept that some lines might not be valid JSON or might not be the messages we care about
         // But for --rg-json, we expect a stream of these.
-        if let Ok(msg) = serde_json::from_slice::<RgMessage>(&buf) {
-            sink.handle(msg)?;
+        match serde_json::from_slice::<RgMessage>(&buf) {
+            Ok(msg) => sink.handle(msg)?,
+            Err(e) => {
+                // Only warn if it looks like JSON but failed to match schema,
+                // or if we want to be verbose. For now, let's warn to help debugging.
+                // We avoid warning on empty lines (handled above).
+                eprintln!("Warning: failed to parse rg json line: {}", e);
+                // Also print the line content for context (truncated)
+                let s = String::from_utf8_lossy(&buf);
+                eprintln!("  Line content: {:.100}", s.trim());
+            }
         }
     }
 

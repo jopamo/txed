@@ -100,14 +100,22 @@ fn test_rg_json() {
     // Construct rg-json input that points to this file
     // Correct ripgrep JSON structure has "data" field
     let p = file_path.to_str().unwrap();
-    let begin = format!(r#"{{"type":"begin","data":{{"path":{{"text":"{}"}}}}}}"#, p);
+    // JSON strings require backslashes to be escaped.
+    // On Windows, paths contain backslashes. On Linux, they don't (usually).
+    // We must escape them to produce valid JSON.
+    let p_json = p.replace('\\', "\\\\");
+
+    let begin = format!(
+        r#"{{"type":"begin","data":{{"path":{{"text":"{}"}}}}}}"#,
+        p_json
+    );
     let match_event = format!(
         r#"{{"type":"match","data":{{"path":{{"text":"{}"}},"lines":{{"text":"hello foo world"}},"line_number":1,"absolute_offset":0,"submatches":[{{"match_text":"foo","start":6,"end":9}}]}}}}"#,
-        p
+        p_json
     );
     let end = format!(
         r#"{{"type":"end","data":{{"path":{{"text":"{}"}},"binary_offset":null,"stats":{{"elapsed":{{"secs":0,"nanos":0,"human":"0s"}},"searches":1,"searches_with_match":1,"matches":1,"matched_lines":1}}}}}}"#,
-        p
+        p_json
     );
     let json_input = format!("{begin}\n{match_event}\n{end}\n");
 
