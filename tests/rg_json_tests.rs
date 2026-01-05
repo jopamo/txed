@@ -1,6 +1,6 @@
 use assert_cmd::cargo::cargo_bin_cmd;
-use std::io::Write;
-use tempfile::NamedTempFile;
+use std::fs;
+use tempfile::tempdir;
 
 #[test]
 fn rg_json_span_targeting() {
@@ -8,11 +8,10 @@ fn rg_json_span_targeting() {
     //    foo at line 1 (offset 0..3)
     //    foo at line 2 (offset 4..7)
     //    foo at line 3 (offset 8..11)
-    let mut file = NamedTempFile::new().unwrap();
-    writeln!(file, "foo").unwrap();
-    writeln!(file, "foo").unwrap();
-    writeln!(file, "foo").unwrap();
-    let path = file.path().to_str().unwrap().to_string();
+    let dir = tempdir().unwrap();
+    let path_buf = dir.path().join("test.txt");
+    fs::write(&path_buf, "foo\nfoo\nfoo\n").unwrap();
+    let path = path_buf.to_str().unwrap().to_string();
 
     // 2. Create rg JSON output that only targets the MIDDLE "foo" (line 2)
     //    Offset of line 2 is 4. "foo" is at 4..7.
@@ -44,9 +43,10 @@ fn rg_json_span_targeting() {
 fn rg_json_multiple_submatches() {
     // 1. File with multiple matches on one line
     //    "foo foo"
-    let mut file = NamedTempFile::new().unwrap();
-    writeln!(file, "foo foo").unwrap();
-    let path = file.path().to_str().unwrap().to_string();
+    let dir = tempdir().unwrap();
+    let path_buf = dir.path().join("test.txt");
+    fs::write(&path_buf, "foo foo\n").unwrap();
+    let path = path_buf.to_str().unwrap().to_string();
 
     // 2. Rg JSON targeting only the SECOND "foo"
     //    Line offset 0.
