@@ -155,6 +155,7 @@ fn test_json_stdin_text() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_json_transaction_staging_failure() {
     let dir = tempfile::tempdir().unwrap();
     let subdir = dir.path().join("subdir");
