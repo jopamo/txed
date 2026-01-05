@@ -43,6 +43,7 @@ fn test_output_streams_policy_error() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_output_streams_file_error() {
     let dir = tempdir().unwrap();
     let subdir = dir.path().join("subdir");
